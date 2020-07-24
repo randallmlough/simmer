@@ -1,15 +1,18 @@
-{{- if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else -}}
-	{{- range $rel := .Table.ToOneRelationships -}}
-		{{- $ltable := $.Aliases.Table $rel.Table -}}
-		{{- $ftable := $.Aliases.Table $rel.ForeignTable -}}
+	{{- range $rel := $model.Table.ToOneRelationships -}}
+		{{- $ltable := $data.Aliases.Table $rel.Table -}}
+		{{- $ftable := $data.Aliases.Table $rel.ForeignTable -}}
 		{{- $relAlias := $ftable.Relationship $rel.Name -}}
-		{{- $canSoftDelete := (getTable $.Tables $rel.ForeignTable).CanSoftDelete }}
+		{{- $canSoftDelete := (getTable $data.Tables $rel.ForeignTable).CanSoftDelete }}
 // {{$relAlias.Local}} pointed to by the foreign key.
 func (o *{{$ltable.UpSingular}}) {{$relAlias.Local}}(mods ...queries.QueryMod) ({{$ftable.DownSingular}}Query) {
 	queryMods := []queries.QueryMod{
 		queries.Where("{{$rel.ForeignColumn | $.Quotes}} = ?", o.{{$ltable.Column $rel.Column}}),
-        {{if and $.AddSoftDeletes $canSoftDelete -}}
+        {{if and $options.AddSoftDeletes $canSoftDelete -}}
         queries.WhereIsNull("deleted_at"),
         {{- end}}
 	}
@@ -17,7 +20,7 @@ func (o *{{$ltable.UpSingular}}) {{$relAlias.Local}}(mods ...queries.QueryMod) (
 	queryMods = append(queryMods, mods...)
 
 	query := {{$ftable.UpPlural}}(queryMods...)
-	queries.SetFrom(query.Query, "{{.ForeignTable | $.SchemaTable}}")
+	queries.SetFrom(query.Query, "{{.ForeignTable | $data.SchemaTable}}")
 
 	return query
 }
