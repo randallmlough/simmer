@@ -1,0 +1,208 @@
+{{ reserveImport "context"  }}
+{{ reserveImport "fmt"  }}
+{{ reserveImport "io"  }}
+{{ reserveImport "strconv"  }}
+{{ reserveImport "time"  }}
+{{ reserveImport "sync"  }}
+{{ reserveImport "errors"  }}
+{{ reserveImport "bytes"  }}
+{{ reserveImport "strings"  }}
+
+{{ reserveImport "github.com/randallmlough/gqlutils" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
+
+
+{{ reserveImport "github.com/ericlagergren/decimal" }}
+{{ reserveImport "github.com/randallmlough/simmer/simmer" }}
+{{ reserveImport "github.com/randallmlough/simmer/queries" }}
+{{ reserveImport "github.com/randallmlough/simmer/queries" }}
+{{ reserveImport "github.com/randallmlough/simmer/types" }}
+{{ reserveImport "github.com/volatiletech/null/v8" }}
+
+{{ reserveImport "database/sql" }}
+{{ reserveImport  $.Backend.Directory }}
+{{ reserveImport  $.Frontend.Directory }}
+
+{{ range $enum := .Enums }}
+	func NullDotStringToPointer{{ .Name|go }}(v null.String) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+		s := StringTo{{ .Name|go }}(v.String)
+		if s == "" {
+			return nil
+		}
+		return &s
+	}
+
+	func NullDotStringTo{{ .Name|go }}(v null.String) {{ $.Frontend.Package }}.{{ .Name|go }} {
+		if !v.Valid {
+			return ""
+		}
+		return StringTo{{ .Name|go }}(v.String)
+	}
+
+	func StringTo{{ .Name|go }}(v string) {{ $.Frontend.Package }}.{{ .Name|go }} {
+		{{- range $value := .Values }}
+			if v == "{{ .NameLower }}" {
+				return {{ $.Frontend.Package }}.{{$enum.Name|go}}{{ .Name|go }}
+			}
+		{{- end }}
+		return ""
+	}
+
+	func StringToPointer{{ .Name|go }}(v string) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+		s := StringTo{{ .Name|go }}(v)
+		if s == "" {
+			return nil
+		}
+		return &s
+	}
+
+	func Pointer{{ .Name|go }}ToString(v *{{ $.Frontend.Package }}.{{ .Name|go }}) string {
+		if v == nil {
+			return ""
+		}
+		return {{ .Name|go }}ToString(*v)
+	}
+
+	func Pointer{{ .Name|go }}ToNullDotString(v *{{ $.Frontend.Package }}.{{ .Name|go }}) null.String {
+		if v == nil {
+			return null.NewString("", false)
+		}
+		return {{ .Name|go }}ToNullDotString(*v)
+	}
+
+	func {{ .Name|go }}ToNullDotString(v {{ $.Frontend.Package }}.{{ .Name|go }}) null.String {
+		s := {{ .Name|go }}ToString(v)
+		return null.NewString(s, s != "")
+	}
+
+	func {{ .Name|go }}ToString(v {{ $.Frontend.Package }}.{{ .Name|go }}) string {
+		{{- range $value := .Values }}
+			if v == {{ $.Frontend.Package }}.{{$enum.Name|go}}{{ .Name|go }} {
+				return "{{ .NameLower }}"
+			}
+		{{- end }}
+		return ""
+	}
+{{ end }}
+
+{{ range $model := .Models }}
+
+	{{with .Description }} {{.|prefixLines "// "}} {{end}}
+	{{- if .IsNormal  -}}
+
+		{{- if .HasStringPrimaryID }}
+			func {{ .Name|go }}WithStringID(id string) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return &{{ $.Frontend.Package }}.{{ .Name|go }}{
+					ID: id,
+				}
+			}
+
+			func {{ .Name|go }}WithNullDotStringID(id null.String) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return {{ .Name|go }}WithStringID(id.String)
+			}
+		{{- else }}
+			func {{ .Name|go }}WithUintID(id uint) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return &{{ $.Frontend.Package }}.{{ .Name|go }}{
+					ID: {{ $model.Name|go }}IDToDomain(id),
+				}
+			}
+
+			func {{ .Name|go }}WithIntID(id int) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return {{ .Name|go }}WithUintID(uint(id))
+			}
+
+			func {{ .Name|go }}WithNullDotUintID(id null.Uint) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return {{ .Name|go }}WithUintID(id.Uint)
+			}
+
+			func {{ .Name|go }}WithNullDotIntID(id null.Int) *{{ $.Frontend.Package }}.{{ .Name|go }} {
+				return {{ .Name|go }}WithUintID(uint(id.Int))
+			}
+			
+		{{- end }}
+
+		func {{ .Name|go }}ModelsToDomain(am []*models.{{ .Name|go }})( []*{{ $.Frontend.Package }}.{{ .Name|go }}) {
+			ar := make([]*{{ $.Frontend.Package }}.{{ .Name|go }}, len(am))
+			for i,m := range am {
+				ar[i] = {{ .Name|go }}ModelToDomain(m)
+			}
+			return ar
+		}
+
+		{{ range $field := .Fields }}
+			{{- if $field.IsPrimaryNumberID -}}
+				func {{ $model.Name|go }}IDToDomain(v uint) string {
+					return gqlutils.IDToDomain(v, models.TableNames.{{ $model.Name|go }})
+				}
+			{{- end -}}
+		{{- end }}
+
+
+	func {{ .Name|go }}ModelToDomain(m *models.{{ .BoilerModel.Name|go }})( *{{ $.Frontend.Package }}.{{ .Name|go }}) {
+		if m == nil {
+			return nil
+		}
+
+		r := &{{ $.Frontend.Package }}.{{ .Name|go }}{
+			{{ range $field := .Fields }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				{{- if $field.IsNumberID -}}
+					{{ $field.Name|go }}: {{ $field.ConvertConfig.ToDomain }},
+				{{- else if $field.IsRelation -}}
+				{{- else if $field.ConvertConfig.IsCustom }}
+					{{ $field.Name|go }}: {{ $field.ConvertConfig.ToDomain }}(m.{{ $field.BoilerField.Name|go }}),
+				{{- else }}
+					{{ $field.Name|go }}: m.{{ $field.BoilerField.Name|go }},
+				{{- end -}}
+			{{- end }}
+		}
+
+		{{ range $field := .Fields }}
+	
+			{{- if $field.IsRelation }}
+				{{- if $field.IsPlural }}
+					if m.R != nil && m.R.{{ $field.Name|go }} != nil  {
+						r.{{ $field.Name|go }} = {{ $field.BoilerField.Relationship.Name|go }}ModelsToDomain(m.R.{{ $field.Name|go }})
+					} 
+				{{- else }}	
+				
+				if gqlutils.{{ $field.ConvertConfig.BoilerTypeAsText }}IsFilled(m.{{ $field.Name|go }}ID) {
+					if m.R != nil && m.R.{{ $field.Name|go }} != nil  {
+						r.{{ $field.Name|go }} = {{ $field.BoilerField.Relationship.Name|go }}ModelToDomain(m.R.{{ $field.Name|go }})
+					} else {
+						r.{{ $field.Name|go }} = {{ $field.BoilerField.Relationship.Name|go }}With{{ $field.ConvertConfig.BoilerTypeAsText|go }}ID(m.{{ $field.Name|go }}ID)
+					}
+				}
+				{{- end -}}
+			{{end -}}
+		{{- end }}
+
+		return r
+	}
+
+		{{ range $field := .Fields }}
+			{{- if $field.IsPrimaryNumberID }}
+				func {{ $model.Name|go }}ID(v string) {{ $field.BoilerField.Type }} {
+					return gqlutils.IDToBoiler{{ $field.BoilerField.Type|go }}(v)
+				}
+
+				func {{ $model.Name|go }}IDs(a []string) []{{ $field.BoilerField.Type }} {
+					return gqlutils.IDsToBoiler{{ $field.BoilerField.Type|go }}(a)
+				}
+				
+			{{- end -}}
+		{{- end }}
+	{{ end }}
+{{- end }}
+
+func AppPasswordToString(v app.Password) string {
+	return string(v)
+}
+func StringToAppPassword(v string) app.Password {
+	return app.Password(v)
+}

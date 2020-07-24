@@ -1,0 +1,116 @@
+{{ reserveImport "context"  }}
+{{ reserveImport "fmt"  }}
+{{ reserveImport "io"  }}
+{{ reserveImport "strconv"  }}
+{{ reserveImport "time"  }}
+{{ reserveImport "sync"  }}
+{{ reserveImport "errors"  }}
+{{ reserveImport "bytes"  }}
+{{ reserveImport "strings"  }}
+
+{{ reserveImport "github.com/randallmlough/gqlutils" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
+
+
+{{ reserveImport "github.com/ericlagergren/decimal" }}
+{{ reserveImport "github.com/randallmlough/simmer/simmer" }}
+{{ reserveImport "github.com/randallmlough/simmer/queries" }}
+{{ reserveImport "github.com/randallmlough/simmer/queries/qm" }}
+{{ reserveImport "github.com/randallmlough/simmer/queries" }}
+{{ reserveImport "github.com/randallmlough/simmer/types" }}
+{{ reserveImport "github.com/volatiletech/null/v8" }}
+
+{{ reserveImport "database/sql" }}
+{{ reserveImport  $.Backend.Directory }}
+{{ reserveImport  $.Frontend.Directory }}
+
+
+{{ range $model := .Models }}
+	{{with .Description }} {{.|prefixLines "// "}} {{end}}
+	{{- if .IsInput }}
+				
+		func {{ .PluralName|go }}ToBoiler(am []*{{ $.Frontend.Package }}.{{ .Name|go }})( []*models.{{ .BoilerModel.Name|go }}) {
+			ar := make([]*models.{{ .BoilerModel.Name|go }}, len(am))
+			for i,m := range am {
+				ar[i] = {{ .Name|go }}ToBoiler(
+					m,
+				)
+			}
+			return ar
+		}
+		
+		func {{ .Name|go }}ToBoiler(
+				m *{{ $.Frontend.Package }}.{{ .Name|go }},
+			)( *models.{{ .BoilerModel.Name|go }}) {
+			if m == nil {
+				return nil
+			}	
+			r := &models.{{ .BoilerModel.Name|go }}{
+			{{ range $field := .Fields -}}
+				{{ if $field.IsNumberID -}}
+					{{- $field.BoilerField.Name|go }} : {{ $field.ConvertConfig.ToBoiler }},
+				{{ else if $field.IsRelation -}}
+				{{ else if $field.ConvertConfig.IsCustom -}}
+					{{- $field.BoilerField.Name|go }} : {{ $field.ConvertConfig.ToBoiler }}(m.{{ $field.Name|go }}),
+				{{ else -}}	
+					{{- $field.BoilerField.Name|go }}: m.{{ $field.Name|go }},
+				{{ end }}
+			{{- end -}}
+			}
+			return r
+		}
+
+		func {{ .Name|go }}ToModelM(
+			input map[string]interface{},
+			m {{ $.Frontend.Package }}.{{ .Name|go }},
+		) models.M {
+			modelM := models.M{}
+			for key, _ := range input {
+				switch key {
+					{{ range $field := .Fields -}}
+					case "{{ $field.Name }}":
+						{{ if $field.IsNumberID -}}
+							modelM[models.{{ $model.BoilerModel.Name|go }}Columns.{{- $field.BoilerField.Name|go }}] = {{ $field.ConvertConfig.ToBoiler }}
+						{{ else if $field.IsRelation -}}
+						{{ else if $field.ConvertConfig.IsCustom -}}
+							modelM[models.{{ $model.BoilerModel.Name|go }}Columns.{{- $field.BoilerField.Name|go }}] = {{ $field.ConvertConfig.ToBoiler }}(m.{{ $field.Name|go }})
+						{{ else -}}	
+							modelM[models.{{ $model.BoilerModel.Name|go }}Columns.{{- $field.BoilerField.Name|go }}] = m.{{ $field.Name|go }}
+						{{ end -}}
+					{{ end -}}
+				}
+			}
+			return modelM
+		}
+
+		{{ range $field := .Fields -}}
+			{{ if $field.ConvertConfig.IsDomainType}}
+{{/*			func {{ $field.ConvertConfig.ToBoiler }}(v {{ $field.Type }}) {{ $field.BoilerField.Type }}{*/}}
+{{/*				{{ if eq $field.BoilerField.Type "string" }}*/}}
+{{/*					return string(v)*/}}
+{{/*				{{ end }}*/}}
+{{/*			}*/}}
+{{/*			func {{ $field.ConvertConfig.ToDomain }}(v {{ $field.BoilerField.Type }}) {{ $field.Type }}{*/}}
+{{/*				return {{ $field.Type }}(v)*/}}
+{{/*			}*/}}
+			{{ end }}
+		{{end }}
+
+		func {{ .Name|go }}ToBoilerWhitelist(input map[string]interface{}, extraColumns ...string) simmer.Columns {
+			columnsWhichAreSet := []string{}
+			for key, _ := range input {
+				switch key {
+					{{ range $field := .Fields -}}
+						case "{{ $field.Name }}":
+							columnsWhichAreSet = append(columnsWhichAreSet, models.{{ $model.BoilerModel.Name|go }}Columns.{{- $field.BoilerField.Name|go }})
+					{{ end -}}
+				}
+			}
+			columnsWhichAreSet = append(columnsWhichAreSet, extraColumns...)
+			return simmer.Whitelist(columnsWhichAreSet...)
+		}
+	{{- end }}
+{{- end }}
