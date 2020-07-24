@@ -10,15 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
-)
-
-var (
-	// Tags must be in a format like: json, xml, etc.
-	rgxValidTag = regexp.MustCompile(`[a-zA-Z_\.]+`)
-	// Column names must be in format column_name or table_name.column_name
-	rgxValidTableColumn = regexp.MustCompile(`^[\w]+\.[\w]+$|^[\w]+$`)
 )
 
 type Data struct {
@@ -26,13 +18,14 @@ type Data struct {
 	Table   database.Table
 	Aliases Aliases
 
-	PkgName string
-	Schema  string
+	// todo remove unused fields after migration
+	//PkgName string
+	Schema string
 
 	// Helps tune the output
-	//DriverName string
-	Dialect database.Dialect
-	Driver  database.Interface
+	DriverName string
+	Dialect    database.Dialect
+	Driver     database.Interface
 	//TypeReplaces []TypeReplace
 
 	// LQ and RQ contain a quoted quote that allows us to write
@@ -41,37 +34,37 @@ type Data struct {
 	RQ string
 
 	// Control various generation features
-	AddGlobal        bool
-	AddPanic         bool
-	AddSoftDeletes   bool
-	NoContext        bool
-	NoHooks          bool
-	NoAutoTimestamps bool
-	NoRowsAffected   bool
+	//AddGlobal        bool
+	//AddPanic         bool
+	//AddSoftDeletes   bool
+	//NoContext        bool
+	//NoHooks          bool
+	//NoAutoTimestamps bool
+	//NoRowsAffected   bool
 	//NoDriverTemplates bool
-	NoBackReferencing bool
+	//NoBackReferencing bool
 
 	// Tags control which tags are added to the struct
-	Tags []string
+	//Tags []string
 
 	// RelationTag controls the value of the tags for the Relationship struct
-	RelationTag string
+	//RelationTag string
 
 	// Run struct tags as camelCase or snake_case
-	StructTagCasing string
+	//StructTagCasing string
 
 	// Contains field names that should have tags values set to '-'
-	TagIgnore map[string]struct{}
+	//TagIgnore map[string]struct{}
 
 	// OutputDirDepth is used to find sqlboiler config file
-	OutputDirDepth int
+	//OutputDirDepth int
 
 	// Hacky state for where clauses to avoid having to do type-based imports
 	// for singletons
-	DBTypes templates.Once
+	//DBTypes templates.Once
 
 	// StringFuncs are usable in templates with stringMap
-	StringFuncs map[string]func(string) string
+	//StringFuncs map[string]func(string) string
 }
 
 func (d *Data) Quotes(s string) string {
@@ -91,36 +84,14 @@ type TypeReplace struct {
 }
 
 type Options struct {
-	DBConfig *database.Config
-
-	Aliases           Aliases
-	AddGlobal         bool
-	AddPanic          bool
-	AddSoftDeletes    bool
-	NoContext         bool
-	NoHooks           bool
-	NoAutoTimestamps  bool
-	NoRowsAffected    bool
-	NoDriverTemplates bool
-	NoBackReferencing bool
+	DBConfig           *database.Config
+	DatabaseDriverName string
+	Aliases            Aliases
 }
 
 func New(opts Options) (*Data, error) {
 
-	data := &Data{
-		AddGlobal:        opts.AddGlobal,
-		AddPanic:         opts.AddPanic,
-		AddSoftDeletes:   opts.AddSoftDeletes,
-		NoContext:        opts.NoContext,
-		NoHooks:          opts.NoHooks,
-		NoAutoTimestamps: opts.NoAutoTimestamps,
-		NoRowsAffected:   opts.NoRowsAffected,
-		//NoDriverTemplates: opts.NoDriverTemplates,
-		NoBackReferencing: true,
-		TagIgnore:         make(map[string]struct{}),
-		DBTypes:           make(templates.Once),
-		StringFuncs:       templateStringMappers,
-	}
+	data := new(Data)
 
 	if opts.DBConfig == nil {
 		return nil, errors.New("postgres database config required")
@@ -254,26 +225,12 @@ func (d *Data) DriverTemplates() (map[string]templates.TemplateLoader, error) {
 	return temps, nil
 }
 
-// initTags removes duplicate tags and validates the format
-// of all user tags are simple strings without quotes: [a-zA-Z_\.]+
-func (d *Data) initTags(tags []string) error {
-	d.Tags = strmangle.RemoveDuplicates(d.Tags)
-	for _, v := range d.Tags {
-		if !rgxValidTag.MatchString(v) {
-			return errors.New("Invalid tag format %q supplied, only specify name, eg: xml")
-		}
-	}
-
-	return nil
-}
-
-func (d *Data) initAliases(aliases Aliases) error {
+func (d *Data) initAliases(aliases Aliases) {
 
 	a := aliases
 	FillAliases(&a, d.Tables)
 	d.Aliases = a
 
-	return nil
 }
 
 // matchColumn checks if a column 'c' matches specifiers in 'm'.

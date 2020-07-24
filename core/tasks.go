@@ -4,7 +4,14 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/randallmlough/simmer/importers"
+	"github.com/volatiletech/strmangle"
 	"path/filepath"
+	"regexp"
+)
+
+var (
+	// Tags must be in a format like: json, xml, etc.
+	rgxValidTag = regexp.MustCompile(`[a-zA-Z_\.]+`)
 )
 
 type Task interface {
@@ -102,6 +109,19 @@ func (o *Options) validate() error {
 	if o.StructTagCasing == "" {
 		o.StructTagCasing = "snake"
 	}
+	return nil
+}
+
+// initTags removes duplicate tags and validates the format
+// of all user tags are simple strings without quotes: [a-zA-Z_\.]+
+func (o *Options) initTags(tags []string) error {
+	o.Tags = strmangle.RemoveDuplicates(o.Tags)
+	for _, v := range o.Tags {
+		if !rgxValidTag.MatchString(v) {
+			return errors.New("Invalid tag format %q supplied, only specify name, eg: xml")
+		}
+	}
+
 	return nil
 }
 

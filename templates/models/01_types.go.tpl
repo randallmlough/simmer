@@ -1,23 +1,26 @@
-{{if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{if $model.Table.IsJoinTable -}}
 {{else -}}
-{{- $alias := .Aliases.Table .Table.Name -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name -}}
 var (
-	{{$alias.DownSingular}}AllColumns               = []string{{"{"}}{{.Table.Columns | columnNames | stringMap .StringFuncs.quoteWrap | join ", "}}{{"}"}}
-	{{if .Dialect.UseAutoColumns -}}
-	{{$alias.DownSingular}}ColumnsWithAuto = []string{{"{"}}{{.Table.Columns | filterColumnsByAuto true | columnNames | stringMap .StringFuncs.quoteWrap | join ","}}{{"}"}}
+	{{$alias.DownSingular}}AllColumns               = []string{{"{"}}{{$model.Table.Columns | columnNames | stringMap (stringFuncs "quoteWrap") | join ", "}}{{"}"}}
+	{{if $data.Dialect.UseAutoColumns -}}
+	{{$alias.DownSingular}}ColumnsWithAuto = []string{{"{"}}{{$model.Table.Columns | filterColumnsByAuto true | columnNames | stringMap (stringFuncs "quoteWrap") | join ","}}{{"}"}}
 	{{end -}}
-	{{$alias.DownSingular}}ColumnsWithoutDefault = []string{{"{"}}{{.Table.Columns | filterColumnsByDefault false | columnNames | stringMap .StringFuncs.quoteWrap | join ","}}{{"}"}}
-	{{$alias.DownSingular}}ColumnsWithDefault    = []string{{"{"}}{{.Table.Columns | filterColumnsByDefault true | columnNames | stringMap .StringFuncs.quoteWrap | join ","}}{{"}"}}
-	{{$alias.DownSingular}}PrimaryKeyColumns     = []string{{"{"}}{{.Table.PKey.Columns | stringMap .StringFuncs.quoteWrap | join ", "}}{{"}"}}
+	{{$alias.DownSingular}}ColumnsWithoutDefault = []string{{"{"}}{{$model.Table.Columns | filterColumnsByDefault false | columnNames | stringMap (stringFuncs "quoteWrap") | join ","}}{{"}"}}
+	{{$alias.DownSingular}}ColumnsWithDefault    = []string{{"{"}}{{$model.Table.Columns | filterColumnsByDefault true | columnNames | stringMap (stringFuncs "quoteWrap") | join ","}}{{"}"}}
+	{{$alias.DownSingular}}PrimaryKeyColumns     = []string{{"{"}}{{$model.Table.PKey.Columns | stringMap (stringFuncs "quoteWrap") | join ", "}}{{"}"}}
 )
 
 type (
 	// {{$alias.UpSingular}}Slice is an alias for a slice of pointers to {{$alias.UpSingular}}.
 	// This should generally be used opposed to []{{$alias.UpSingular}}.
 	{{$alias.UpSingular}}Slice []*{{$alias.UpSingular}}
-	{{if not .NoHooks -}}
+	{{if not $options.NoHooks -}}
 	// {{$alias.UpSingular}}Hook is the signature for custom {{$alias.UpSingular}} hook methods
-	{{$alias.UpSingular}}Hook func({{if .NoContext}}simmer.Executor{{else}}context.Context, simmer.ContextExecutor{{end}}, *{{$alias.UpSingular}}) error
+	{{$alias.UpSingular}}Hook func({{if $options.NoContext}}simmer.Executor{{else}}context.Context, simmer.ContextExecutor{{end}}, *{{$alias.UpSingular}}) error
 	{{- end}}
 
 	{{$alias.DownSingular}}Query struct {

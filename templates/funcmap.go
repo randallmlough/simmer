@@ -32,10 +32,23 @@ func (o Once) Put(s string) bool {
 
 var goVarnameReplacer = strings.NewReplacer("[", "_", "]", "_", ".", "_")
 
+var templateStringMappers = map[string]func(string) string{
+	// String ops
+	"quoteWrap":       func(a string) string { return fmt.Sprintf(`"%s"`, a) },
+	"replaceReserved": strmangle.ReplaceReservedWords,
+
+	// Casing
+	"titleCase": strmangle.TitleCase,
+	"camelCase": strmangle.CamelCase,
+}
+
 // templateFunctions is a map of all the functions that get passed into the
 // templates. If you wish to pass a new function into your own template,
 // add a function pointer here.
 var TemplateFunctions = TemplateFuncs{
+	"stringFuncs": func(funcName string) func(string) string {
+		return templateStringMappers[funcName]
+	},
 	// String ops
 	"quoteWrap": func(s string) string { return fmt.Sprintf(`"%s"`, s) },
 	"id":        strmangle.Identifier,
