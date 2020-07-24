@@ -74,6 +74,7 @@ func (m *Models) Run(schema *core.Schema) error {
 	}
 
 	type DataOptions struct {
+		PkgName           string
 		AddGlobal         bool
 		AddPanic          bool
 		AddSoftDeletes    bool
@@ -85,6 +86,7 @@ func (m *Models) Run(schema *core.Schema) error {
 		NoBackReferencing bool
 	}
 	schema.Options = DataOptions{
+		PkgName:           m.PkgName,
 		AddGlobal:         false,
 		AddPanic:          false,
 		AddSoftDeletes:    true,

@@ -1,10 +1,11 @@
+{{ $data := .Data }}
 // M type is for providing columns and column values to UpdateAll.
 type M map[string]interface{}
 
 // ErrSyncFail occurs during insert when the record could not be retrieved in
 // order to populate default value information. This usually happens when LastInsertId
 // fails or there was a primary key configuration that was not resolvable.
-var ErrSyncFail = errors.New("{{.PkgName}}: failed to synchronize data after insert")
+var ErrSyncFail = errors.New("{{.Options.PkgName}}: failed to synchronize data after insert")
 
 type insertCache struct {
 	query        string
@@ -61,7 +62,7 @@ MySQL output looks like:    TableNameColNameEnumValue = "enumvalue"
 It only titlecases the EnumValue portion if it's snake-cased.
 */}}
 {{$once := onceNew}}
-{{- range $table := .Tables -}}
+{{- range $table := $data.Tables -}}
 	{{- range $col := $table.Columns | filterColumnsByEnum -}}
 		{{- $name := parseEnumName $col.DBType -}}
 		{{- $vals := parseEnumVals $col.DBType -}}
