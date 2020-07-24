@@ -75,6 +75,7 @@ func (m *Models) Run(schema *core.Schema) error {
 
 	type DataOptions struct {
 		PkgName           string
+		OutputDirDepth    int
 		AddGlobal         bool
 		AddPanic          bool
 		AddSoftDeletes    bool
@@ -87,6 +88,7 @@ func (m *Models) Run(schema *core.Schema) error {
 	}
 	schema.Options = DataOptions{
 		PkgName:           m.PkgName,
+		OutputDirDepth:    core.OutputDirDepth(m.OutFolder),
 		AddGlobal:         false,
 		AddPanic:          false,
 		AddSoftDeletes:    true,
