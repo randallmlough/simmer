@@ -1,45 +1,48 @@
-{{- if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else -}}
-	{{- range $fkey := .Table.FKeys -}}
-		{{- $ltable := $.Aliases.Table $fkey.Table -}}
-		{{- $ftable := $.Aliases.Table $fkey.ForeignTable -}}
+	{{- range $fkey := $model.Table.FKeys -}}
+		{{- $ltable := $data.Aliases.Table $fkey.Table -}}
+		{{- $ftable := $data.Aliases.Table $fkey.ForeignTable -}}
 		{{- $rel := $ltable.Relationship $fkey.Name -}}
 		{{- $arg := printf "maybe%s" $ltable.UpSingular -}}
 		{{- $col := $ltable.Column $fkey.Column -}}
 		{{- $fcol := $ftable.Column $fkey.ForeignColumn -}}
-		{{- $usesPrimitives := usesPrimitives $.Tables $fkey.Table $fkey.Column $fkey.ForeignTable $fkey.ForeignColumn -}}
-		{{- $schemaTable := $fkey.Table | $.SchemaTable }}
-{{if $.AddGlobal -}}
+		{{- $usesPrimitives := usesPrimitives $data.Tables $fkey.Table $fkey.Column $fkey.ForeignTable $fkey.ForeignColumn -}}
+		{{- $schemaTable := $fkey.Table | $data.SchemaTable }}
+{{if $options.AddGlobal -}}
 // Set{{$rel.Foreign}}G of the {{$ltable.DownSingular}} to the related item.
 // Sets o.R.{{$rel.Foreign}} to related.
 // Adds o to related.R.{{$rel.Local}}.
 // Uses the global database handle.
-func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}G({{if not $.NoContext}}ctx context.Context, {{end -}} insert bool, related *{{$ftable.UpSingular}}) error {
-	return o.Set{{$rel.Foreign}}({{if $.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related)
+func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}G({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related *{{$ftable.UpSingular}}) error {
+	return o.Set{{$rel.Foreign}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related)
 }
 
 {{end -}}
 
-{{if $.AddPanic -}}
+{{if $options.AddPanic -}}
 // Set{{$rel.Foreign}}P of the {{$ltable.DownSingular}} to the related item.
 // Sets o.R.{{$rel.Foreign}} to related.
 // Adds o to related.R.{{$rel.Local}}.
 // Panics on error.
-func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}P({{if $.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related *{{$ftable.UpSingular}}) {
-	if err := o.Set{{$rel.Foreign}}({{if not $.NoContext}}ctx, {{end -}} exec, insert, related); err != nil {
+func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}P({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related *{{$ftable.UpSingular}}) {
+	if err := o.Set{{$rel.Foreign}}({{if not $options.NoContext}}ctx, {{end -}} exec, insert, related); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
 
 {{end -}}
 
-{{if and $.AddGlobal $.AddPanic -}}
+{{if and $options.AddGlobal $options.AddPanic -}}
 // Set{{$rel.Foreign}}GP of the {{$ltable.DownSingular}} to the related item.
 // Sets o.R.{{$rel.Foreign}} to related.
 // Adds o to related.R.{{$rel.Local}}.
 // Uses the global database handle and panics on error.
-func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}GP({{if not $.NoContext}}ctx context.Context, {{end -}} insert bool, related *{{$ftable.UpSingular}}) {
-	if err := o.Set{{$rel.Foreign}}({{if $.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related); err != nil {
+func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}GP({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related *{{$ftable.UpSingular}}) {
+	if err := o.Set{{$rel.Foreign}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -49,22 +52,22 @@ func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}GP({{if not $.NoContext}}ctx
 // Set{{$rel.Foreign}} of the {{$ltable.DownSingular}} to the related item.
 // Sets o.R.{{$rel.Foreign}} to related.
 // Adds o to related.R.{{$rel.Local}}.
-func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}({{if $.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related *{{$ftable.UpSingular}}) error {
+func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related *{{$ftable.UpSingular}}) error {
 	var err error
 	if insert {
-		if err = related.Insert({{if not $.NoContext}}ctx, {{end -}} exec, simmer.Infer()); err != nil {
+		if err = related.Insert({{if not $options.NoContext}}ctx, {{end -}} exec, simmer.Infer()); err != nil {
 			return errors.Wrap(err, "failed to insert into foreign table")
 		}
 	}
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE {{$schemaTable}} SET %s WHERE %s",
-		strmangle.SetParamNames("{{$.LQ}}", "{{$.RQ}}", {{if $.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, []string{{"{"}}"{{.Column}}"{{"}"}}),
-		strmangle.WhereClause("{{$.LQ}}", "{{$.RQ}}", {{if $.Dialect.UseIndexPlaceholders}}2{{else}}0{{end}}, {{$ltable.DownSingular}}PrimaryKeyColumns),
+		strmangle.SetParamNames("{{$data.LQ}}", "{{$data.RQ}}", {{if $data.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, []string{{"{"}}"{{.Column}}"{{"}"}}),
+		strmangle.WhereClause("{{$data.LQ}}", "{{$data.RQ}}", {{if $data.Dialect.UseIndexPlaceholders}}2{{else}}0{{end}}, {{$ltable.DownSingular}}PrimaryKeyColumns),
 	)
-	values := []interface{}{related.{{$fcol}}, o.{{$.Table.PKey.Columns | stringMap (aliasCols $ltable) | join ", o."}}{{"}"}}
+	values := []interface{}{related.{{$fcol}}, o.{{$model.Table.PKey.Columns | stringMap (aliasCols $ltable) | join ", o."}}{{"}"}}
 
-	{{if $.NoContext -}}
+	{{if $options.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, updateQuery)
 		fmt.Fprintln(simmer.DebugWriter, values)
@@ -77,7 +80,7 @@ func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}({{if $.NoContext}}exec simm
 	}
 	{{end -}}
 
-	{{if $.NoContext -}}
+	{{if $options.NoContext -}}
 	if _, err = exec.Exec(updateQuery, values...); err != nil {
 		return errors.Wrap(err, "failed to update local table")
 	}
@@ -123,37 +126,37 @@ func (o *{{$ltable.UpSingular}}) Set{{$rel.Foreign}}({{if $.NoContext}}exec simm
 }
 
 		{{- if .Nullable}}
-{{if $.AddGlobal -}}
+{{if $options.AddGlobal -}}
 // Remove{{$rel.Foreign}}G relationship.
 // Sets o.R.{{$rel.Foreign}} to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle.
-func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}G({{if not $.NoContext}}ctx context.Context, {{end -}} related *{{$ftable.UpSingular}}) error {
-	return o.Remove{{$rel.Foreign}}({{if $.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related)
+func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}G({{if not $options.NoContext}}ctx context.Context, {{end -}} related *{{$ftable.UpSingular}}) error {
+	return o.Remove{{$rel.Foreign}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related)
 }
 
 {{end -}}
 
-{{if $.AddPanic -}}
+{{if $options.AddPanic -}}
 // Remove{{$rel.Foreign}}P relationship.
 // Sets o.R.{{$rel.Foreign}} to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Panics on error.
-func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}P({{if $.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related *{{$ftable.UpSingular}}) {
-	if err := o.Remove{{$rel.Foreign}}({{if not $.NoContext}}ctx, {{end -}} exec, related); err != nil {
+func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}P({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related *{{$ftable.UpSingular}}) {
+	if err := o.Remove{{$rel.Foreign}}({{if not $options.NoContext}}ctx, {{end -}} exec, related); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
 
 {{end -}}
 
-{{if and $.AddGlobal $.AddPanic -}}
+{{if and $options.AddGlobal $options.AddPanic -}}
 // Remove{{$rel.Foreign}}GP relationship.
 // Sets o.R.{{$rel.Foreign}} to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
 // Uses the global database handle and panics on error.
-func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}GP({{if not $.NoContext}}ctx context.Context, {{end -}} related *{{$ftable.UpSingular}}) {
-	if err := o.Remove{{$rel.Foreign}}({{if $.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related); err != nil {
+func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}GP({{if not $options.NoContext}}ctx context.Context, {{end -}} related *{{$ftable.UpSingular}}) {
+	if err := o.Remove{{$rel.Foreign}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -163,14 +166,14 @@ func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}GP({{if not $.NoContext}}
 // Remove{{$rel.Foreign}} relationship.
 // Sets o.R.{{$rel.Foreign}} to nil.
 // Removes o from all passed in related items' relationships struct (Optional).
-func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}({{if $.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related *{{$ftable.UpSingular}}) error {
+func (o *{{$ltable.UpSingular}}) Remove{{$rel.Foreign}}({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related *{{$ftable.UpSingular}}) error {
 	var err error
 
 	queries.SetScanner(&o.{{$col}}, nil)
-	{{if $.NoContext -}}
-	if {{if not $.NoRowsAffected}}_, {{end -}} err = o.Update(exec, simmer.Whitelist("{{.Column}}")); err != nil {
+	{{if $options.NoContext -}}
+	if {{if not $options.NoRowsAffected}}_, {{end -}} err = o.Update(exec, simmer.Whitelist("{{.Column}}")); err != nil {
 	{{else -}}
-	if {{if not $.NoRowsAffected}}_, {{end -}} err = o.Update(ctx, exec, simmer.Whitelist("{{.Column}}")); err != nil {
+	if {{if not $options.NoRowsAffected}}_, {{end -}} err = o.Update(ctx, exec, simmer.Whitelist("{{.Column}}")); err != nil {
 	{{end -}}
 		return errors.Wrap(err, "failed to update local table")
 	}
