@@ -34,27 +34,22 @@ func Runner(config *Config, tasks ...Task) error {
 }
 
 type Options struct {
-	Name              string   `json:"name" yaml:"name"`
-	Debug             bool     `json:"debug,omitempty" yaml:"debug,omitempty"`
-	OutFolder         string   `json:"out_folder,omitempty" yaml:"output,omitempty"`
-	PkgName           string   `json:"pkgname,omitempty" yaml:"pkgname,omitempty"`
-	PluralFileNames   bool     `json:"plural_file_names" yaml:"plural_file_names"`
-	NoTests           bool     `json:"no_tests,omitempty" yaml:"no_tests,omitempty"`
-	Tags              []string `json:"tags,omitempty" yaml:"tags,omitempty"`
-	Replacements      []string `json:"replacements,omitempty" yaml:"replacements,omitempty"`
-	AddSoftDeletes    bool     `json:"add_soft_deletes,omitempty" yaml:"add_soft_deletes,omitempty"`
-	NoRowsAffected    bool     `json:"no_rows_affected,omitempty" yaml:"no_rows_affected,omitempty"`
-	NoHooks           bool     `json:"no_hooks,omitempty" yaml:"no_hooks,omitempty"`
-	NoAutoTimestamps  bool     `json:"no_auto_timestamps,omitempty" yaml:"no_auto_timestamps,omitempty"`
-	Wipe              bool     `json:"wipe,omitempty" yaml:"wipe,omitempty"`
-	NoGeneratedHeader bool     `json:"no_generated_header,omitempty" yaml:"no_generated_header,omitempty"`
+	Name              string `json:"name" yaml:"name"`
+	Debug             bool   `json:"debug,omitempty" yaml:"debug,omitempty"`
+	OutFolder         string `json:"out_folder,omitempty" yaml:"output,omitempty"`
+	PkgName           string `json:"pkgname,omitempty" yaml:"pkgname,omitempty"`
+	PluralFileNames   bool   `json:"plural_file_names" yaml:"plural_file_names"`
+	NoTests           bool   `json:"no_tests,omitempty" yaml:"no_tests,omitempty"`
+	Wipe              bool   `json:"wipe,omitempty" yaml:"wipe,omitempty"`
+	NoGeneratedHeader bool   `json:"no_generated_header,omitempty" yaml:"no_generated_header,omitempty"`
+
+	Tags            []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	TagIgnore       []string `json:"tag_ignore" yaml:"tag_ignore"`
+	StructTagCasing string   `json:"struct_tag_casing" yaml:"struct_tag_casing"`
 
 	TemplateDirs []string             `json:"template_dirs" yaml:"template_dirs"`
 	Imports      importers.Collection `json:"imports" yaml:"imports"`
-
-	StructTagCasing string   `json:"struct_tag_casing" yaml:"struct_tag_casing"`
-	RelationTag     string   `json:"relation_tag" yaml:"relation_tag"`
-	TagIgnore       []string `json:"tag_ignore" yaml:"tag_ignore"`
+	Replacements []string             `json:"replacements,omitempty" yaml:"replacements,omitempty"`
 }
 
 func (o *Options) Init(defaultOptions func() Options) error {
@@ -83,15 +78,10 @@ func mergeOptions(src, defaultOptions Options) Options {
 		NoTests:           boolFallback(src.NoTests, defaultOptions.NoTests),
 		Tags:              sliceFallback(src.Tags, defaultOptions.Tags),
 		Replacements:      sliceFallback(src.Replacements, defaultOptions.Replacements),
-		AddSoftDeletes:    boolFallback(src.AddSoftDeletes, defaultOptions.AddSoftDeletes),
-		NoRowsAffected:    boolFallback(src.NoRowsAffected, defaultOptions.NoRowsAffected),
-		NoHooks:           boolFallback(src.NoHooks, defaultOptions.NoHooks),
-		NoAutoTimestamps:  boolFallback(src.NoAutoTimestamps, defaultOptions.NoAutoTimestamps),
 		Wipe:              boolFallback(src.Wipe, defaultOptions.Wipe),
 		NoGeneratedHeader: boolFallback(src.NoGeneratedHeader, defaultOptions.NoGeneratedHeader),
 		TemplateDirs:      sliceFallback(src.TemplateDirs, defaultOptions.TemplateDirs),
 		StructTagCasing:   stringFallback(src.StructTagCasing, defaultOptions.StructTagCasing),
-		RelationTag:       stringFallback(src.RelationTag, defaultOptions.RelationTag),
 		TagIgnore:         sliceFallback(src.TagIgnore, defaultOptions.TagIgnore),
 	}
 }
@@ -109,6 +99,9 @@ func (o *Options) validate() error {
 		o.PkgName = filepath.Base(o.OutFolder)
 	}
 
+	if o.StructTagCasing == "" {
+		o.StructTagCasing = "snake"
+	}
 	return nil
 }
 

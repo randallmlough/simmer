@@ -1,37 +1,40 @@
-{{- $alias := .Aliases.Table .Table.Name -}}
-{{- $orig_tbl_name := .Table.Name -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name -}}
+{{- $orig_tbl_name := $model.Table.Name -}}
 
 // {{$alias.UpSingular}} is an object representing the database table.
 type {{$alias.UpSingular}} struct {
-	{{- range $column := .Table.Columns -}}
+	{{- range $column := $model.Table.Columns -}}
 	{{- $colAlias := $alias.Column $column.Name -}}
 	{{- $orig_col_name := $column.Name -}}
-	{{if ignore $orig_tbl_name $orig_col_name $.TagIgnore -}}
-	{{$colAlias}} {{$column.Type}} `{{generateIgnoreTags $.Tags}}simmer:"{{$column.Name}}" json:"-" toml:"-" yaml:"-"`
-	{{else if eq $.StructTagCasing "title" -}}
-	{{$colAlias}} {{$column.Type}} `{{generateTags $.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name | titleCase}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name | titleCase}}" yaml:"{{$column.Name | titleCase}}{{if $column.Nullable}},omitempty{{end}}"`
-	{{else if eq $.StructTagCasing "camel" -}}
-	{{$colAlias}} {{$column.Type}} `{{generateTags $.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name | camelCase}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name | camelCase}}" yaml:"{{$column.Name | camelCase}}{{if $column.Nullable}},omitempty{{end}}"`
-	{{else if eq $.StructTagCasing "alias" -}}
-	{{$colAlias}} {{$column.Type}} `{{generateTags $.Tags $colAlias}}simmer:"{{$column.Name}}" json:"{{$colAlias}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$colAlias}}" yaml:"{{$colAlias}}{{if $column.Nullable}},omitempty{{end}}"`
+	{{if ignore $orig_tbl_name $orig_col_name $options.TagIgnore -}}
+	{{$colAlias}} {{$column.Type}} `{{generateIgnoreTags $options.Tags}}simmer:"{{$column.Name}}" json:"-" toml:"-" yaml:"-"`
+	{{else if eq $options.StructTagCasing "title" -}}
+	{{$colAlias}} {{$column.Type}} `{{generateTags $options.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name | titleCase}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name | titleCase}}" yaml:"{{$column.Name | titleCase}}{{if $column.Nullable}},omitempty{{end}}"`
+	{{else if eq $options.StructTagCasing "camel" -}}
+	{{$colAlias}} {{$column.Type}} `{{generateTags $options.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name | camelCase}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name | camelCase}}" yaml:"{{$column.Name | camelCase}}{{if $column.Nullable}},omitempty{{end}}"`
+	{{else if eq $options.StructTagCasing "alias" -}}
+	{{$colAlias}} {{$column.Type}} `{{generateTags $options.Tags $colAlias}}simmer:"{{$column.Name}}" json:"{{$colAlias}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$colAlias}}" yaml:"{{$colAlias}}{{if $column.Nullable}},omitempty{{end}}"`
 	{{else -}}
-	{{$colAlias}} {{$column.Type}} `{{generateTags $.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name}}" yaml:"{{$column.Name}}{{if $column.Nullable}},omitempty{{end}}"`
+	{{$colAlias}} {{$column.Type}} `{{generateTags $options.Tags $column.Name}}simmer:"{{$column.Name}}" json:"{{$column.Name}}{{if $column.Nullable}},omitempty{{end}}" toml:"{{$column.Name}}" yaml:"{{$column.Name}}{{if $column.Nullable}},omitempty{{end}}"`
 	{{end -}}
 	{{end -}}
-	{{- if .Table.IsJoinTable -}}
+	{{- if $model.Table.IsJoinTable -}}
 	{{- else}}
-	R *{{$alias.DownSingular}}R `{{generateTags $.Tags $.RelationTag}}simmer:"{{$.RelationTag}}" json:"{{$.RelationTag}}" toml:"{{$.RelationTag}}" yaml:"{{$.RelationTag}}"`
-	L {{$alias.DownSingular}}L `{{generateIgnoreTags $.Tags}}simmer:"-" json:"-" toml:"-" yaml:"-"`
+	R *{{$alias.DownSingular}}R `{{generateTags $options.Tags $options.RelationTag}}simmer:"{{$options.RelationTag}}" json:"{{$options.RelationTag}}" toml:"{{$options.RelationTag}}" yaml:"{{$options.RelationTag}}"`
+	L {{$alias.DownSingular}}L `{{generateIgnoreTags $options.Tags}}simmer:"-" json:"-" toml:"-" yaml:"-"`
 	{{end -}}
 }
 
 var {{$alias.UpSingular}}Columns = struct {
-	{{range $column := .Table.Columns -}}
+	{{range $column := $model.Table.Columns -}}
 	{{- $colAlias := $alias.Column $column.Name -}}
 	{{$colAlias}} string
 	{{end -}}
 }{
-	{{range $column := .Table.Columns -}}
+	{{range $column := $model.Table.Columns -}}
 	{{- $colAlias := $alias.Column $column.Name -}}
 	{{$colAlias}}: "{{$column.Name}}",
 	{{end -}}
@@ -39,8 +42,8 @@ var {{$alias.UpSingular}}Columns = struct {
 
 {{/* Generated where helpers for all types in the database */}}
 // Generated where
-{{- range .Table.Columns -}}
-	{{- if (oncePut $.DBTypes .Type)}}
+{{- range $model.Table.Columns -}}
+	{{- if (oncePut $options.DBTypes .Type)}}
 	{{$name := printf "whereHelper%s" (goVarname .Type)}}
 type {{$name}} struct { field string }
 func (w {{$name}}) EQ(x {{.Type}}) queries.QueryMod { return queries.Where{{if .Nullable}}NullEQ(w.field, false, x){{else}}(w.field, queries.EQ, x){{end}} }
@@ -73,72 +76,72 @@ func (w {{$name}}) NIN(slice []{{.Type}}) queries.QueryMod {
 {{- end}}
 
 var {{$alias.UpSingular}}Where = struct {
-	{{range $column := .Table.Columns -}}
+	{{range $column := $model.Table.Columns -}}
 	{{- $colAlias := $alias.Column $column.Name -}}
 	{{$colAlias}} whereHelper{{goVarname $column.Type}}
 	{{end -}}
 }{
-	{{range $column := .Table.Columns -}}
+	{{range $column := $model.Table.Columns -}}
 	{{- $colAlias := $alias.Column $column.Name -}}
-	{{$colAlias}}: whereHelper{{goVarname $column.Type}}{field: "{{$.Table.Name | $.SchemaTable}}.{{$column.Name | $.Quotes}}"},
+	{{$colAlias}}: whereHelper{{goVarname $column.Type}}{field: "{{$model.Table.Name | $data.SchemaTable}}.{{$column.Name | $data.Quotes}}"},
 	{{end -}}
 }
 
-{{- if .Table.IsJoinTable -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else}}
 // {{$alias.UpSingular}}Rels is where relationship names are stored.
 var {{$alias.UpSingular}}Rels = struct {
-	{{range .Table.FKeys -}}
+	{{range $model.Table.FKeys -}}
 	{{- $relAlias := $alias.Relationship .Name -}}
 	{{$relAlias.Foreign}} string
 	{{end -}}
 
-	{{range .Table.ToOneRelationships -}}
-	{{- $ftable := $.Aliases.Table .ForeignTable -}}
+	{{range $model.Table.ToOneRelationships -}}
+	{{- $ftable := $data.Aliases.Table .ForeignTable -}}
 	{{- $relAlias := $ftable.Relationship .Name -}}
 	{{$relAlias.Local}} string
 	{{end -}}
 
-	{{range .Table.ToManyRelationships -}}
-	{{- $relAlias := $.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
+	{{range $model.Table.ToManyRelationships -}}
+	{{- $relAlias := $data.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
 	{{$relAlias.Local}} string
 	{{end -}}{{/* range tomany */}}
 }{
-	{{range .Table.FKeys -}}
+	{{range $model.Table.FKeys -}}
 	{{- $relAlias := $alias.Relationship .Name -}}
 	{{$relAlias.Foreign}}: "{{$relAlias.Foreign}}",
 	{{end -}}
 
-	{{range .Table.ToOneRelationships -}}
-	{{- $ftable := $.Aliases.Table .ForeignTable -}}
+	{{range $model.Table.ToOneRelationships -}}
+	{{- $ftable := $data.Aliases.Table .ForeignTable -}}
 	{{- $relAlias := $ftable.Relationship .Name -}}
 	{{$relAlias.Local}}: "{{$relAlias.Local}}",
 	{{end -}}
 
-	{{range .Table.ToManyRelationships -}}
-	{{- $relAlias := $.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
+	{{range $model.Table.ToManyRelationships -}}
+	{{- $relAlias := $data.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
 	{{$relAlias.Local}}: "{{$relAlias.Local}}",
 	{{end -}}{{/* range tomany */}}
 }
 
 // {{$alias.DownSingular}}R is where relationships are stored.
 type {{$alias.DownSingular}}R struct {
-	{{range .Table.FKeys -}}
-	{{- $ftable := $.Aliases.Table .ForeignTable -}}
+	{{range $model.Table.FKeys -}}
+	{{- $ftable := $data.Aliases.Table .ForeignTable -}}
 	{{- $relAlias := $alias.Relationship .Name -}}
-	{{$relAlias.Foreign}} *{{$ftable.UpSingular}} `{{generateTags $.Tags $relAlias.Foreign}}simmer:"{{$relAlias.Foreign}}" json:"{{$relAlias.Foreign}}" toml:"{{$relAlias.Foreign}}" yaml:"{{$relAlias.Foreign}}"`
+	{{$relAlias.Foreign}} *{{$ftable.UpSingular}} `{{generateTags $options.Tags $relAlias.Foreign}}simmer:"{{$relAlias.Foreign}}" json:"{{$relAlias.Foreign}}" toml:"{{$relAlias.Foreign}}" yaml:"{{$relAlias.Foreign}}"`
 	{{end -}}
 
-	{{range .Table.ToOneRelationships -}}
-	{{- $ftable := $.Aliases.Table .ForeignTable -}}
+	{{range $model.Table.ToOneRelationships -}}
+	{{- $ftable := $data.Aliases.Table .ForeignTable -}}
 	{{- $relAlias := $ftable.Relationship .Name -}}
-	{{$relAlias.Local}} *{{$ftable.UpSingular}} `{{generateTags $.Tags $relAlias.Local}}simmer:"{{$relAlias.Local}}" json:"{{$relAlias.Local}}" toml:"{{$relAlias.Local}}" yaml:"{{$relAlias.Local}}"`
+	{{$relAlias.Local}} *{{$ftable.UpSingular}} `{{generateTags $options.Tags $relAlias.Local}}simmer:"{{$relAlias.Local}}" json:"{{$relAlias.Local}}" toml:"{{$relAlias.Local}}" yaml:"{{$relAlias.Local}}"`
 	{{end -}}
 
-	{{range .Table.ToManyRelationships -}}
-	{{- $ftable := $.Aliases.Table .ForeignTable -}}
-	{{- $relAlias := $.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
-	{{$relAlias.Local}} {{printf "%sSlice" $ftable.UpSingular}} `{{generateTags $.Tags $relAlias.Local}}simmer:"{{$relAlias.Local}}" json:"{{$relAlias.Local}}" toml:"{{$relAlias.Local}}" yaml:"{{$relAlias.Local}}"`
+	{{range $model.Table.ToManyRelationships -}}
+	{{- $ftable := $data.Aliases.Table .ForeignTable -}}
+	{{- $relAlias := $data.Aliases.ManyRelationship .ForeignTable .Name .JoinTable .JoinLocalFKeyName -}}
+	{{$relAlias.Local}} {{printf "%sSlice" $ftable.UpSingular}} `{{generateTags $options.Tags $relAlias.Local}}simmer:"{{$relAlias.Local}}" json:"{{$relAlias.Local}}" toml:"{{$relAlias.Local}}" yaml:"{{$relAlias.Local}}"`
 	{{end -}}{{/* range tomany */}}
 }
 

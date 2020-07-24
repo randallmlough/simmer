@@ -7,6 +7,11 @@ import (
 	"github.com/randallmlough/simmer/importers"
 	"github.com/randallmlough/simmer/templates"
 	"github.com/volatiletech/strmangle"
+	"regexp"
+)
+
+var (
+	rgxValidTableColumn = regexp.MustCompile(`^[\w]+\.[\w]+$|^[\w]+$`)
 )
 
 func ModelsTask(p *core.Options) core.Task {
@@ -73,7 +78,10 @@ func (m *Models) Run(schema *core.Schema) error {
 		m.Imports.Test.Standard = append(m.Imports.Test.Standard, `"context"`)
 	}
 
-	type DataOptions struct {
+	type options struct {
+		*core.Options
+		TagIgnore         map[string]struct{}
+		RelationTag       string
 		PkgName           string
 		OutputDirDepth    int
 		AddGlobal         bool
@@ -85,9 +93,19 @@ func (m *Models) Run(schema *core.Schema) error {
 		NoRowsAffected    bool
 		NoDriverTemplates bool
 		NoBackReferencing bool
+		DBTypes           templates.Once
 	}
-	schema.Options = DataOptions{
-		PkgName:           m.PkgName,
+	ignoreTags := make(map[string]struct{})
+	for _, v := range m.TagIgnore {
+		if !rgxValidTableColumn.MatchString(v) {
+			return errors.New("Invalid column name %q supplied, only specify column name or table.column, eg: created_at, user.password")
+		}
+		ignoreTags[v] = struct{}{}
+	}
+	schema.Options = options{
+		Options:           m.Options,
+		TagIgnore:         ignoreTags,
+		RelationTag:       "-",
 		OutputDirDepth:    core.OutputDirDepth(m.OutFolder),
 		AddGlobal:         false,
 		AddPanic:          false,
@@ -98,6 +116,7 @@ func (m *Models) Run(schema *core.Schema) error {
 		NoRowsAffected:    false,
 		NoDriverTemplates: false,
 		NoBackReferencing: true,
+		DBTypes:           make(templates.Once),
 	}
 
 	if err := templates.Render(templates.Options{
@@ -130,16 +149,18 @@ func (m *Models) Run(schema *core.Schema) error {
 		}
 	}
 
-	for _, table := range schema.Data.Tables {
-		if table.IsJoinTable {
+	for _, model := range schema.Models() {
+		if model.Table.IsJoinTable {
 			continue
 		}
-		schema.Data.Table = table
 
-		fname := table.Name
+		schema.Model = model
+		fname := model.Name
 		if m.PluralFileNames {
 			fname = strmangle.Plural(fname)
 		}
+
+		table := model.Table
 
 		var imps importers.Set
 		imps.Standard = m.Imports.All.Standard
@@ -157,7 +178,7 @@ func (m *Models) Run(schema *core.Schema) error {
 			OutFolder:         m.OutFolder,
 			NoGeneratedHeader: m.NoGeneratedHeader,
 			PkgName:           m.PkgName,
-			Data:              schema.Data,
+			Data:              schema,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
 			IsTest:            false,
@@ -172,7 +193,7 @@ func (m *Models) Run(schema *core.Schema) error {
 				OutFolder:         m.OutFolder,
 				NoGeneratedHeader: m.NoGeneratedHeader,
 				PkgName:           m.PkgName,
-				Data:              schema.Data,
+				Data:              schema,
 				Templates:         tpls,
 				TemplateFuncs:     tplsFuncs,
 				IsTest:            true,
@@ -192,14 +213,9 @@ func defaultModelOptions() core.Options {
 		NoTests:           false,
 		Tags:              nil,
 		Replacements:      nil,
-		AddSoftDeletes:    true,
-		NoRowsAffected:    false,
-		NoHooks:           false,
-		NoAutoTimestamps:  false,
 		Wipe:              true,
 		NoGeneratedHeader: true,
-		StructTagCasing:   "",
-		RelationTag:       "",
+		StructTagCasing:   "snake",
 		TagIgnore:         nil,
 	}
 }
