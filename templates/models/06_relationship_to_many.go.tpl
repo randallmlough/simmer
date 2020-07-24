@@ -20,14 +20,14 @@ func (o *{{$ltable.UpSingular}}) {{$relAlias.Local}}(mods ...queries.QueryMod) {
 		{{if $rel.ToJoinTable -}}
 	queryMods = append(queryMods,
 		{{$schemaJoinTable := $rel.JoinTable | $data.SchemaTable -}}
-		queries.InnerJoin("{{$schemaJoinTable}} on {{$schemaForeignTable}}.{{$rel.ForeignColumn | $.Quotes}} = {{$schemaJoinTable}}.{{$rel.JoinForeignColumn | $.Quotes}}"),
-		queries.Where("{{$schemaJoinTable}}.{{$rel.JoinLocalColumn | $.Quotes}}=?", o.{{$ltable.Column $rel.Column}}),
+		queries.InnerJoin("{{$schemaJoinTable}} on {{$schemaForeignTable}}.{{$rel.ForeignColumn | $data.Quotes}} = {{$schemaJoinTable}}.{{$rel.JoinForeignColumn | $.Quotes}}"),
+		queries.Where("{{$schemaJoinTable}}.{{$rel.JoinLocalColumn | $data.Quotes}}=?", o.{{$ltable.Column $rel.Column}}),
 	)
 		{{else -}}
 	queryMods = append(queryMods,
-		queries.Where("{{$schemaForeignTable}}.{{$rel.ForeignColumn | $.Quotes}}=?", o.{{$ltable.Column $rel.Column}}),
+		queries.Where("{{$schemaForeignTable}}.{{$rel.ForeignColumn | $data.Quotes}}=?", o.{{$ltable.Column $rel.Column}}),
 		{{if and $options.AddSoftDeletes $canSoftDelete -}}
-		queries.WhereIsNull("{{$schemaForeignTable}}.{{"deleted_at" | $.Quotes}}"),
+		queries.WhereIsNull("{{$schemaForeignTable}}.{{"deleted_at" | $data.Quotes}}"),
 		{{- end}}
 	)
 		{{end}}
