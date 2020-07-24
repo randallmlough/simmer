@@ -1,17 +1,20 @@
-{{- if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else -}}
-	{{- range $fkey := .Table.FKeys -}}
-		{{- $ltable := $.Aliases.Table $fkey.Table -}}
-		{{- $ftable := $.Aliases.Table $fkey.ForeignTable -}}
+	{{- range $fkey := $model.Table.FKeys -}}
+		{{- $ltable := $data.Aliases.Table $fkey.Table -}}
+		{{- $ftable := $data.Aliases.Table $fkey.ForeignTable -}}
 		{{- $rel := $ltable.Relationship $fkey.Name -}}
 		{{- $arg := printf "maybe%s" $ltable.UpSingular -}}
 		{{- $col := $ltable.Column $fkey.Column -}}
 		{{- $fcol := $ftable.Column $fkey.ForeignColumn -}}
-		{{- $usesPrimitives := usesPrimitives $.Tables $fkey.Table $fkey.Column $fkey.ForeignTable $fkey.ForeignColumn -}}
-		{{- $canSoftDelete := (getTable $.Tables $fkey.ForeignTable).CanSoftDelete }}
+		{{- $usesPrimitives := usesPrimitives $data.Tables $fkey.Table $fkey.Column $fkey.ForeignTable $fkey.ForeignColumn -}}
+		{{- $canSoftDelete := (getTable $data.Tables $fkey.ForeignTable).CanSoftDelete }}
 // Load{{$rel.Foreign}} allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
+func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
 	var slice []*{{$ltable.UpSingular}}
 	var object *{{$ltable.UpSingular}}
 
@@ -65,17 +68,17 @@ func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $.NoContext}}e simmer
 	}
 
 	query := NewQuery(
-	    queries.From(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}`),
-	    queries.WhereIn(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}.{{.ForeignColumn}} in ?`, args...),
-	    {{if and $.AddSoftDeletes $canSoftDelete -}}
-	    queries.WhereIsNull(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}.deleted_at`),
+	    queries.From(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}`),
+	    queries.WhereIn(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.{{.ForeignColumn}} in ?`, args...),
+	    {{if and $options.AddSoftDeletes $canSoftDelete -}}
+	    queries.WhereIsNull(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.deleted_at`),
 	    {{- end}}
     )
 	if mods != nil {
 		mods.Apply(query)
 	}
 
-	{{if $.NoContext -}}
+	{{if $options.NoContext -}}
 	results, err := query.Query(e)
 	{{else -}}
 	results, err := query.QueryContext(ctx, e)
@@ -96,10 +99,10 @@ func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $.NoContext}}e simmer
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for {{.ForeignTable}}")
 	}
 
-	{{if not $.NoHooks -}}
+	{{if not $options.NoHooks -}}
 	if len({{$ltable.DownSingular}}AfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks({{if $.NoContext}}e{{else}}ctx, e{{end}}); err != nil {
+			if err := obj.doAfterSelectHooks({{if $options.NoContext}}e{{else}}ctx, e{{end}}); err != nil {
 				return err
 			}
 		}
@@ -113,7 +116,7 @@ func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $.NoContext}}e simmer
 	if singular {
 		foreign := resultSlice[0]
 		object.R.{{$rel.Foreign}} = foreign
-		{{if not $.NoBackReferencing -}}
+		{{if not $options.NoBackReferencing -}}
 		if foreign.R == nil {
 			foreign.R = &{{$ftable.DownSingular}}R{}
 		}
@@ -134,7 +137,7 @@ func ({{$ltable.DownSingular}}L) Load{{$rel.Foreign}}({{if $.NoContext}}e simmer
 			if queries.Equal(local.{{$col}}, foreign.{{$fcol}}) {
 			{{end -}}
 				local.R.{{$rel.Foreign}} = foreign
-				{{if not $.NoBackReferencing -}}
+				{{if not $options.NoBackReferencing -}}
 				if foreign.R == nil {
 					foreign.R = &{{$ftable.DownSingular}}R{}
 				}
