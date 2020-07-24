@@ -108,7 +108,7 @@ func test{{$alias.UpPlural}}SliceUpdateAll(t *testing.T) {
 	for _, col := range fields {
 		for i := 0; i < n; i++ {
 			f := typ.Field(i)
-			if f.Tag.Get("boil") == col {
+			if f.Tag.Get("simmer") == col {
 				updateMap[col] = value.Field(i).Interface()
 			}
 		}

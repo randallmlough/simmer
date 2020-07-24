@@ -367,7 +367,7 @@ func makeStructMappingHelper(typ reflect.Type, prefix string, current uint64, de
 	for i := 0; i < n; i++ {
 		f := typ.Field(i)
 
-		tag, recurse := getBoilTag(f)
+		tag, recurse := getFieldTag(f)
 		if len(tag) == 0 {
 			tag = unTitleCase(f.Name)
 		} else if tag[0] == '-' {
@@ -387,8 +387,8 @@ func makeStructMappingHelper(typ reflect.Type, prefix string, current uint64, de
 	}
 }
 
-func getBoilTag(field reflect.StructField) (name string, recurse bool) {
-	tag := field.Tag.Get("boil")
+func getFieldTag(field reflect.StructField) (name string, recurse bool) {
+	tag := field.Tag.Get("simmer")
 
 	if len(tag) == 0 {
 		return "", false

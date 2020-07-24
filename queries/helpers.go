@@ -18,7 +18,7 @@ func NonZeroDefaultSet(defaults []string, obj interface{}) []string {
 		found := false
 		for i := 0; i < nf; i++ {
 			field := typ.Field(i)
-			name, _ := getBoilTag(field)
+			name, _ := getFieldTag(field)
 
 			if name != def {
 				continue

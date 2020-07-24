@@ -385,7 +385,7 @@ func TestGetBoilTag(t *testing.T) {
 		{"", false},
 	}
 	for i, s := range structFields {
-		name, recurse := getBoilTag(s)
+		name, recurse := getFieldTag(s)
 		if expect[i].Name != name {
 			t.Errorf("Invalid name, expect %q, got %q", expect[i].Name, name)
 		}
