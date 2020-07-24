@@ -1,18 +1,21 @@
-{{- if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else -}}
-	{{- range $rel := .Table.ToManyRelationships -}}
-		{{- $ltable := $.Aliases.Table $rel.Table -}}
-		{{- $ftable := $.Aliases.Table $rel.ForeignTable -}}
-		{{- $relAlias := $.Aliases.ManyRelationship $rel.ForeignTable $rel.Name $rel.JoinTable $rel.JoinLocalFKeyName -}}
+	{{- range $rel := $model.Table.ToManyRelationships -}}
+		{{- $ltable := $data.Aliases.Table $rel.Table -}}
+		{{- $ftable := $data.Aliases.Table $rel.ForeignTable -}}
+		{{- $relAlias := $data.Aliases.ManyRelationship $rel.ForeignTable $rel.Name $rel.JoinTable $rel.JoinLocalFKeyName -}}
 		{{- $col := $ltable.Column $rel.Column -}}
 		{{- $fcol := $ftable.Column $rel.ForeignColumn -}}
-		{{- $usesPrimitives := usesPrimitives $.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
+		{{- $usesPrimitives := usesPrimitives $data.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
 		{{- $arg := printf "maybe%s" $ltable.UpSingular -}}
-		{{- $schemaForeignTable := $rel.ForeignTable | $.SchemaTable -}}
-		{{- $canSoftDelete := (getTable $.Tables $rel.ForeignTable).CanSoftDelete }}
+		{{- $schemaForeignTable := $rel.ForeignTable | $data.SchemaTable -}}
+		{{- $canSoftDelete := (getTable $data.Tables $rel.ForeignTable).CanSoftDelete }}
 // Load{{$relAlias.Local}} allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
+func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
 	var slice []*{{$ltable.UpSingular}}
 	var object *{{$ltable.UpSingular}}
 
@@ -54,22 +57,22 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 	}
 
 		{{if .ToJoinTable -}}
-			{{- $schemaJoinTable := .JoinTable | $.SchemaTable -}}
+			{{- $schemaJoinTable := .JoinTable | $data.SchemaTable -}}
 	query := NewQuery(
-		queries.Select("{{$schemaForeignTable}}.*, {{id 0 | $.Quotes}}.{{.JoinLocalColumn | $.Quotes}}"),
+		queries.Select("{{$schemaForeignTable}}.*, {{id 0 | $data.Quotes}}.{{.JoinLocalColumn | $data.Quotes}}"),
 		queries.From("{{$schemaForeignTable}}"),
-		queries.InnerJoin("{{$schemaJoinTable}} as {{id 0 | $.Quotes}} on {{$schemaForeignTable}}.{{.ForeignColumn | $.Quotes}} = {{id 0 | $.Quotes}}.{{.JoinForeignColumn | $.Quotes}}"),
-		queries.WhereIn("{{id 0 | $.Quotes}}.{{.JoinLocalColumn | $.Quotes}} in ?", args...),
-		{{if and $.AddSoftDeletes $canSoftDelete -}}
-		queries.WhereIsNull("{{$schemaForeignTable}}.{{"deleted_at" | $.Quotes}}"),
+		queries.InnerJoin("{{$schemaJoinTable}} as {{id 0 | $data.Quotes}} on {{$schemaForeignTable}}.{{.ForeignColumn | $data.Quotes}} = {{id 0 | $data.Quotes}}.{{.JoinForeignColumn | $data.Quotes}}"),
+		queries.WhereIn("{{id 0 | $data.Quotes}}.{{.JoinLocalColumn | $data.Quotes}} in ?", args...),
+		{{if and $options.AddSoftDeletes $canSoftDelete -}}
+		queries.WhereIsNull("{{$schemaForeignTable}}.{{"deleted_at" | $data.Quotes}}"),
 		{{- end}}
 	)
 		{{else -}}
 	query := NewQuery(
-	    queries.From(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}`),
-	    queries.WhereIn(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}.{{.ForeignColumn}} in ?`, args...),
-	    {{if and $.AddSoftDeletes $canSoftDelete -}}
-	    queries.WhereIsNull(`{{if $.Dialect.UseSchema}}{{$.Schema}}.{{end}}{{.ForeignTable}}.deleted_at`),
+	    queries.From(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}`),
+	    queries.WhereIn(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.{{.ForeignColumn}} in ?`, args...),
+	    {{if and $options.AddSoftDeletes $canSoftDelete -}}
+	    queries.WhereIsNull(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.deleted_at`),
 	    {{- end}}
     )
 		{{end -}}
@@ -77,7 +80,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 		mods.Apply(query)
 	}
 
-	{{if $.NoContext -}}
+	{{if $options.NoContext -}}
 	results, err := query.Query(e)
 	{{else -}}
 	results, err := query.QueryContext(ctx, e)
@@ -88,8 +91,8 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 
 	var resultSlice []*{{$ftable.UpSingular}}
 	{{if .ToJoinTable -}}
-	{{- $foreignTable := getTable $.Tables .ForeignTable -}}
-	{{- $joinTable := getTable $.Tables .JoinTable -}}
+	{{- $foreignTable := getTable $data.Tables .ForeignTable -}}
+	{{- $joinTable := getTable $data.Tables .JoinTable -}}
 	{{- $localCol := $joinTable.GetColumn .JoinLocalColumn}}
 	var localJoinCols []{{$localCol.Type}}
 	for results.Next() {
@@ -120,10 +123,10 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for {{.ForeignTable}}")
 	}
 
-	{{if not $.NoHooks -}}
+	{{if not $options.NoHooks -}}
 	if len({{$ftable.DownSingular}}AfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks({{if $.NoContext}}e{{else}}ctx, e{{end -}}); err != nil {
+			if err := obj.doAfterSelectHooks({{if $options.NoContext}}e{{else}}ctx, e{{end -}}); err != nil {
 				return err
 			}
 		}
@@ -132,7 +135,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 	{{- end}}
 	if singular {
 		object.R.{{$relAlias.Local}} = resultSlice
-		{{if not $.NoBackReferencing -}}
+		{{if not $options.NoBackReferencing -}}
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
 				foreign.R = &{{$ftable.DownSingular}}R{}
@@ -157,7 +160,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 			if queries.Equal(local.{{$col}}, localJoinCol) {
 			{{end -}}
 				local.R.{{$relAlias.Local}} = append(local.R.{{$relAlias.Local}}, foreign)
-				{{if not $.NoBackReferencing -}}
+				{{if not $options.NoBackReferencing -}}
 				if foreign.R == nil {
 					foreign.R = &{{$ftable.DownSingular}}R{}
 				}
@@ -176,7 +179,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $.NoContext}}e sim
 			if queries.Equal(local.{{$col}}, foreign.{{$fcol}}) {
 			{{end -}}
 				local.R.{{$relAlias.Local}} = append(local.R.{{$relAlias.Local}}, foreign)
-				{{if not $.NoBackReferencing -}}
+				{{if not $options.NoBackReferencing -}}
 				if foreign.R == nil {
 					foreign.R = &{{$ftable.DownSingular}}R{}
 				}
