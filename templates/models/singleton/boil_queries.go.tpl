@@ -1,15 +1,16 @@
+{{ $data := .Data }}
 var dialect = database.Dialect{
-	LQ: 0x{{printf "%x" .Dialect.LQ}},
-	RQ: 0x{{printf "%x" .Dialect.RQ}},
+	LQ: 0x{{printf "%x" $data.Dialect.LQ}},
+	RQ: 0x{{printf "%x" $data.Dialect.RQ}},
 
-	UseIndexPlaceholders:    {{.Dialect.UseIndexPlaceholders}},
-	UseLastInsertID:         {{.Dialect.UseLastInsertID}},
-	UseSchema:               {{.Dialect.UseSchema}},
-	UseDefaultKeyword:       {{.Dialect.UseDefaultKeyword}},
-	UseAutoColumns:          {{.Dialect.UseAutoColumns}},
-	UseTopClause:            {{.Dialect.UseTopClause}},
-	UseOutputClause:         {{.Dialect.UseOutputClause}},
-	UseCaseWhenExistsClause: {{.Dialect.UseCaseWhenExistsClause}},
+	UseIndexPlaceholders:    {{$data.Dialect.UseIndexPlaceholders}},
+	UseLastInsertID:         {{$data.Dialect.UseLastInsertID}},
+	UseSchema:               {{$data.Dialect.UseSchema}},
+	UseDefaultKeyword:       {{$data.Dialect.UseDefaultKeyword}},
+	UseAutoColumns:          {{$data.Dialect.UseAutoColumns}},
+	UseTopClause:            {{$data.Dialect.UseTopClause}},
+	UseOutputClause:         {{$data.Dialect.UseOutputClause}},
+	UseCaseWhenExistsClause: {{$data.Dialect.UseCaseWhenExistsClause}},
 }
 
 // NewQuery initializes a new Query using the passed in QueryMods
