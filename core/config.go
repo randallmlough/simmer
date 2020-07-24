@@ -9,9 +9,9 @@ type Config struct {
 	Migrations string
 	Schema     string
 
-	Models     *Options            `json:"models,omitempty" yaml:"models,omitempty"`
-	Repository *Options            `json:"repository,omitempty" yaml:"repository,omitempty"`
-	Tasks      map[string]*Options `json:"tasks" yaml:"tasks"`
+	//Models     *Options            `json:"models,omitempty" yaml:"models,omitempty"`
+	//Repository *Options            `json:"repository,omitempty" yaml:"repository,omitempty"`
+	Tasks map[string]*Options `json:"tasks" yaml:"tasks"`
 
 	Debug bool `toml:"debug,omitempty" json:"debug,omitempty" yaml:"debug,omitempty"`
 
