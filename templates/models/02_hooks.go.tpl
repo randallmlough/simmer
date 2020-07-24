@@ -1,5 +1,8 @@
-{{- if not .NoHooks -}}
-{{- $alias := .Aliases.Table .Table.Name}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if not $options.NoHooks -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name}}
 
 var {{$alias.DownSingular}}BeforeInsertHooks []{{$alias.UpSingular}}Hook
 var {{$alias.DownSingular}}BeforeUpdateHooks []{{$alias.UpSingular}}Hook
@@ -13,15 +16,15 @@ var {{$alias.DownSingular}}AfterDeleteHooks []{{$alias.UpSingular}}Hook
 var {{$alias.DownSingular}}AfterUpsertHooks []{{$alias.UpSingular}}Hook
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *{{$alias.UpSingular}}) doBeforeInsertHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doBeforeInsertHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}BeforeInsertHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -30,15 +33,15 @@ func (o *{{$alias.UpSingular}}) doBeforeInsertHooks({{if .NoContext}}exec simmer
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *{{$alias.UpSingular}}) doBeforeUpdateHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doBeforeUpdateHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}BeforeUpdateHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -47,15 +50,15 @@ func (o *{{$alias.UpSingular}}) doBeforeUpdateHooks({{if .NoContext}}exec simmer
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *{{$alias.UpSingular}}) doBeforeDeleteHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doBeforeDeleteHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}BeforeDeleteHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -64,15 +67,15 @@ func (o *{{$alias.UpSingular}}) doBeforeDeleteHooks({{if .NoContext}}exec simmer
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *{{$alias.UpSingular}}) doBeforeUpsertHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doBeforeUpsertHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}BeforeUpsertHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -81,15 +84,15 @@ func (o *{{$alias.UpSingular}}) doBeforeUpsertHooks({{if .NoContext}}exec simmer
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *{{$alias.UpSingular}}) doAfterInsertHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doAfterInsertHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}AfterInsertHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -98,15 +101,15 @@ func (o *{{$alias.UpSingular}}) doAfterInsertHooks({{if .NoContext}}exec simmer.
 }
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *{{$alias.UpSingular}}) doAfterSelectHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doAfterSelectHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}AfterSelectHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -115,15 +118,15 @@ func (o *{{$alias.UpSingular}}) doAfterSelectHooks({{if .NoContext}}exec simmer.
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *{{$alias.UpSingular}}) doAfterUpdateHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doAfterUpdateHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}AfterUpdateHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -132,15 +135,15 @@ func (o *{{$alias.UpSingular}}) doAfterUpdateHooks({{if .NoContext}}exec simmer.
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *{{$alias.UpSingular}}) doAfterDeleteHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doAfterDeleteHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}AfterDeleteHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
@@ -149,15 +152,15 @@ func (o *{{$alias.UpSingular}}) doAfterDeleteHooks({{if .NoContext}}exec simmer.
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *{{$alias.UpSingular}}) doAfterUpsertHooks({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
-	{{if not .NoContext -}}
+func (o *{{$alias.UpSingular}}) doAfterUpsertHooks({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}) (err error) {
+	{{if not $options.NoContext -}}
 	if simmer.HooksAreSkipped(ctx) {
 		return nil
 	}
 
 	{{end -}}
 	for _, hook := range {{$alias.DownSingular}}AfterUpsertHooks {
-		if err := hook({{if not .NoContext}}ctx, {{end -}} exec, o); err != nil {
+		if err := hook({{if not $options.NoContext}}ctx, {{end -}} exec, o); err != nil {
 			return err
 		}
 	}
