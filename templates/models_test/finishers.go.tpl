@@ -1,4 +1,7 @@
-{{- $alias := .Aliases.Table .Table.Name}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name}}
 func test{{$alias.UpPlural}}Bind(t *testing.T) {
 	t.Parallel()
 
@@ -9,14 +12,14 @@ func test{{$alias.UpPlural}}Bind(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	if err = {{$alias.UpPlural}}().Bind({{if .NoContext}}nil{{else}}ctx{{end}}, tx, o); err != nil {
+	if err = {{$alias.UpPlural}}().Bind({{if $options.NoContext}}nil{{else}}ctx{{end}}, tx, o); err != nil {
 		t.Error(err)
 	}
 }
@@ -31,14 +34,14 @@ func test{{$alias.UpPlural}}One(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	if x, err := {{$alias.UpPlural}}().One({{if not .NoContext}}ctx, {{end -}} tx); err != nil {
+	if x, err := {{$alias.UpPlural}}().One({{if not $options.NoContext}}ctx, {{end -}} tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
@@ -59,17 +62,17 @@ func test{{$alias.UpPlural}}All(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = {{$alias.DownSingular}}One.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = {{$alias.DownSingular}}One.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = {{$alias.DownSingular}}Two.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = {{$alias.DownSingular}}Two.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := {{$alias.UpPlural}}().All({{if not .NoContext}}ctx, {{end -}} tx)
+	slice, err := {{$alias.UpPlural}}().All({{if not $options.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -93,17 +96,17 @@ func test{{$alias.UpPlural}}Count(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = {{$alias.DownSingular}}One.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = {{$alias.DownSingular}}One.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = {{$alias.DownSingular}}Two.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = {{$alias.DownSingular}}Two.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := {{$alias.UpPlural}}().Count({{if not .NoContext}}ctx, {{end -}} tx)
+	count, err := {{$alias.UpPlural}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}
