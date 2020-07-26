@@ -10,7 +10,7 @@
 		{{- $relAlias := $data.Aliases.ManyRelationship $rel.ForeignTable $rel.Name $rel.JoinTable $rel.JoinLocalFKeyName -}}
 		{{- $colField := $ltable.Column $rel.Column -}}
 		{{- $fcolField := $ftable.Column $rel.ForeignColumn -}}
-		{{- $usesPrimitives := usesPrimitives $.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
+		{{- $usesPrimitives := usesPrimitives $data.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
 		{{- $schemaForeignTable := .ForeignTable | $.SchemaTable }}
 func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	var err error

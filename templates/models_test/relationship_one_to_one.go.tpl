@@ -7,7 +7,7 @@
 		{{- $ltable := $data.Aliases.Table $rel.Table -}}
 		{{- $ftable := $data.Aliases.Table $rel.ForeignTable -}}
 		{{- $relAlias := $ftable.Relationship $rel.Name -}}
-		{{- $usesPrimitives := usesPrimitives $.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
+		{{- $usesPrimitives := usesPrimitives $data.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
 		{{- $colField := $ltable.Column $rel.Column -}}
 		{{- $fcolField := $ftable.Column $rel.ForeignColumn }}
 func test{{$ltable.UpSingular}}OneToOne{{$ftable.UpSingular}}Using{{$relAlias.Local}}(t *testing.T) {
