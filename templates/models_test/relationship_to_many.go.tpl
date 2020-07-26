@@ -11,7 +11,7 @@
 		{{- $colField := $ltable.Column $rel.Column -}}
 		{{- $fcolField := $ftable.Column $rel.ForeignColumn -}}
 		{{- $usesPrimitives := usesPrimitives $data.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
-		{{- $schemaForeignTable := .ForeignTable | $.SchemaTable }}
+		{{- $schemaForeignTable := .ForeignTable | $data.SchemaTable }}
 func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	var err error
 	{{if not $options.NoContext}}ctx := context.Background(){{end}}
@@ -54,11 +54,11 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	}
 
 	{{if .ToJoinTable -}}
-	_, err = tx.Exec("insert into {{.JoinTable | $.SchemaTable}} ({{.JoinLocalColumn | $.Quotes}}, {{.JoinForeignColumn | $.Quotes}}) values {{if $.Dialect.UseIndexPlaceholders}}($1, $2){{else}}(?, ?){{end}}", a.{{$colField}}, b.{{$fcolField}})
+	_, err = tx.Exec("insert into {{.JoinTable | $data.SchemaTable}} ({{.JoinLocalColumn | $.Quotes}}, {{.JoinForeignColumn | $.Quotes}}) values {{if $.Dialect.UseIndexPlaceholders}}($1, $2){{else}}(?, ?){{end}}", a.{{$colField}}, b.{{$fcolField}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = tx.Exec("insert into {{.JoinTable | $.SchemaTable}} ({{.JoinLocalColumn | $.Quotes}}, {{.JoinForeignColumn | $.Quotes}}) values {{if $.Dialect.UseIndexPlaceholders}}($1, $2){{else}}(?, ?){{end}}", a.{{$colField}}, c.{{$fcolField}})
+	_, err = tx.Exec("insert into {{.JoinTable | $data.SchemaTable}} ({{.JoinLocalColumn | $.Quotes}}, {{.JoinForeignColumn | $.Quotes}}) values {{if $.Dialect.UseIndexPlaceholders}}($1, $2){{else}}(?, ?){{end}}", a.{{$colField}}, c.{{$fcolField}})
 	if err != nil {
 		t.Fatal(err)
 	}
