@@ -1,4 +1,6 @@
-{{- $alias := .Aliases.Table .Table.Name -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name -}}
 func test{{$alias.UpPlural}}(t *testing.T) {
 	t.Parallel()
 
