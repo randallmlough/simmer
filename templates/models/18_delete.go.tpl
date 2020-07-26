@@ -1,26 +1,29 @@
-{{- $alias := .Aliases.Table .Table.Name -}}
-{{- $schemaTable := .Table.Name | .SchemaTable -}}
-{{- $canSoftDelete := .Table.CanSoftDelete -}}
-{{- $soft := and .AddSoftDeletes $canSoftDelete }}
-{{if .AddGlobal -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name -}}
+{{- $schemaTable := $model.Table.Name | $data.SchemaTable -}}
+{{- $canSoftDelete := $model.Table.CanSoftDelete -}}
+{{- $soft := and $options.AddSoftDeletes $canSoftDelete }}
+{{if $options.AddGlobal -}}
 // DeleteG deletes a single {{$alias.UpSingular}} record.
 // DeleteG will match against the primary key column to find the record to delete.
-func (o *{{$alias.UpSingular}}) DeleteG({{if not .NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
-	return o.Delete({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
+func (o *{{$alias.UpSingular}}) DeleteG({{if not $options.NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+	return o.Delete({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
 }
 
 {{end -}}
 
-{{if .AddPanic -}}
+{{if $options.AddPanic -}}
 // DeleteP deletes a single {{$alias.UpSingular}} record with an executor.
 // DeleteP will match against the primary key column to find the record to delete.
 // Panics on error.
-func (o *{{$alias.UpSingular}}) DeleteP({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not .NoRowsAffected}}int64{{end -}} {
-	{{if not .NoRowsAffected}}rowsAff, {{end}}err := o.Delete({{if not .NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
+func (o *{{$alias.UpSingular}}) DeleteP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not $options.NoRowsAffected}}int64{{end -}} {
+	{{if not $options.NoRowsAffected}}rowsAff, {{end}}err := o.Delete({{if not $options.NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
-	{{- if not .NoRowsAffected}}
+	{{- if not $options.NoRowsAffected}}
 
 	return rowsAff
 	{{end -}}
@@ -28,16 +31,16 @@ func (o *{{$alias.UpSingular}}) DeleteP({{if .NoContext}}exec simmer.Executor{{e
 
 {{end -}}
 
-{{if and .AddGlobal .AddPanic -}}
+{{if and $options.AddGlobal $options.AddPanic -}}
 // DeleteGP deletes a single {{$alias.UpSingular}} record.
 // DeleteGP will match against the primary key column to find the record to delete.
 // Panics on error.
-func (o *{{$alias.UpSingular}}) DeleteGP({{if not .NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if not .NoRowsAffected}}int64{{end -}} {
-	{{if not .NoRowsAffected}}rowsAff, {{end}}err := o.Delete({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
+func (o *{{$alias.UpSingular}}) DeleteGP({{if not $options.NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if not $options.NoRowsAffected}}int64{{end -}} {
+	{{if not $options.NoRowsAffected}}rowsAff, {{end}}err := o.Delete({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
-	{{- if not .NoRowsAffected}}
+	{{- if not $options.NoRowsAffected}}
 
 	return rowsAff
 	{{end -}}
@@ -47,14 +50,14 @@ func (o *{{$alias.UpSingular}}) DeleteGP({{if not .NoContext}}ctx context.Contex
 
 // Delete deletes a single {{$alias.UpSingular}} record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *{{$alias.UpSingular}}) Delete({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+func (o *{{$alias.UpSingular}}) Delete({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
 	if o == nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} errors.New("{{.PkgName}}: no {{$alias.UpSingular}} provided for delete")
+		return {{if not $options.NoRowsAffected}}0, {{end -}} errors.New("{{$options.PkgName}}: no {{$alias.UpSingular}} provided for delete")
 	}
 
-	{{if not .NoHooks -}}
-	if err := o.doBeforeDeleteHooks({{if not .NoContext}}ctx, {{end -}} exec); err != nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} err
+	{{if not $options.NoHooks -}}
+	if err := o.doBeforeDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+		return {{if not $options.NoRowsAffected}}0, {{end -}} err
 	}
 	{{- end}}
 
@@ -65,26 +68,26 @@ func (o *{{$alias.UpSingular}}) Delete({{if .NoContext}}exec simmer.Executor{{el
 	)
 	if hardDelete {
 		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), {{$alias.DownSingular}}PrimaryKeyMapping)
-		sql = "DELETE FROM {{$schemaTable}} WHERE {{if .Dialect.UseIndexPlaceholders}}{{whereClause .LQ .RQ 1 .Table.PKey.Columns}}{{else}}{{whereClause .LQ .RQ 0 .Table.PKey.Columns}}{{end}}"
+		sql = "DELETE FROM {{$schemaTable}} WHERE {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 1 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}"
 	} else {
 		currTime := time.Now().In(simmer.GetLocation())
 		o.DeletedAt = null.TimeFrom(currTime)
 		wl := []string{"deleted_at"}
-		sql = fmt.Sprintf("UPDATE {{$schemaTable}} SET %s WHERE {{if .Dialect.UseIndexPlaceholders}}{{whereClause .LQ .RQ 2 .Table.PKey.Columns}}{{else}}{{whereClause .LQ .RQ 0 .Table.PKey.Columns}}{{end}}",
-			strmangle.SetParamNames("{{.LQ}}", "{{.RQ}}", {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, wl),
+		sql = fmt.Sprintf("UPDATE {{$schemaTable}} SET %s WHERE {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 2 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}",
+			strmangle.SetParamNames("{{$data.LQ}}", "{{$data.RQ}}", {{if $data.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, wl),
 		)
 		valueMapping, err := queries.BindMapping({{$alias.DownSingular}}Type, {{$alias.DownSingular}}Mapping, append(wl, {{$alias.DownSingular}}PrimaryKeyColumns...))
 		if err != nil {
-			return {{if not .NoRowsAffected}}0, {{end -}} err
+			return {{if not $options.NoRowsAffected}}0, {{end -}} err
 		}
 		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), valueMapping)
 	}
 	{{else -}}
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), {{$alias.DownSingular}}PrimaryKeyMapping)
-	sql := "DELETE FROM {{$schemaTable}} WHERE {{if .Dialect.UseIndexPlaceholders}}{{whereClause .LQ .RQ 1 .Table.PKey.Columns}}{{else}}{{whereClause .LQ .RQ 0 .Table.PKey.Columns}}{{end}}"
+	sql := "DELETE FROM {{$schemaTable}} WHERE {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 1 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}"
 	{{- end}}
 
-	{{if .NoContext -}}
+	{{if $options.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, sql)
 		fmt.Fprintln(simmer.DebugWriter, args...)
@@ -97,55 +100,55 @@ func (o *{{$alias.UpSingular}}) Delete({{if .NoContext}}exec simmer.Executor{{el
 	}
 	{{end -}}
 
-	{{if .NoRowsAffected -}}
-		{{if .NoContext -}}
+	{{if $options.NoRowsAffected -}}
+		{{if $options.NoContext -}}
 	_, err := exec.Exec(sql, args...)
 		{{else -}}
 	_, err := exec.ExecContext(ctx, sql, args...)
 		{{end -}}
 	{{else -}}
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 	result, err := exec.Exec(sql, args...)
 		{{else -}}
 	result, err := exec.ExecContext(ctx, sql, args...)
 		{{end -}}
 	{{end -}}
 	if err != nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{.PkgName}}: unable to delete from {{.Table.Name}}")
+		return {{if not $options.NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{$options.PkgName}}: unable to delete from {{$model.Table.Name}}")
 	}
 
-	{{if not .NoRowsAffected -}}
+	{{if not $options.NoRowsAffected -}}
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "{{.PkgName}}: failed to get rows affected by delete for {{.Table.Name}}")
+		return 0, errors.Wrap(err, "{{$options.PkgName}}: failed to get rows affected by delete for {{$model.Table.Name}}")
 	}
 
 	{{end -}}
 
-	{{if not .NoHooks -}}
-	if err := o.doAfterDeleteHooks({{if not .NoContext}}ctx, {{end -}} exec); err != nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} err
+	{{if not $options.NoHooks -}}
+	if err := o.doAfterDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+		return {{if not $options.NoRowsAffected}}0, {{end -}} err
 	}
 	{{- end}}
 
-	return {{if not .NoRowsAffected}}rowsAff, {{end -}} nil
+	return {{if not $options.NoRowsAffected}}rowsAff, {{end -}} nil
 }
 
-{{if .AddGlobal -}}
-func (q {{$alias.DownSingular}}Query) DeleteAllG({{if not .NoContext}}ctx context.Context{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
-	return q.DeleteAll({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
+{{if $options.AddGlobal -}}
+func (q {{$alias.DownSingular}}Query) DeleteAllG({{if not $options.NoContext}}ctx context.Context{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+	return q.DeleteAll({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
 }
 
 {{end -}}
 
-{{if .AddPanic -}}
+{{if $options.AddPanic -}}
 // DeleteAllP deletes all rows, and panics on error.
-func (q {{$alias.DownSingular}}Query) DeleteAllP({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not .NoRowsAffected}}int64{{end -}} {
-	{{if not .NoRowsAffected}}rowsAff, {{end -}} err := q.DeleteAll({{if not .NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
+func (q {{$alias.DownSingular}}Query) DeleteAllP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not $options.NoRowsAffected}}int64{{end -}} {
+	{{if not $options.NoRowsAffected}}rowsAff, {{end -}} err := q.DeleteAll({{if not $options.NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
-	{{- if not .NoRowsAffected}}
+	{{- if not $options.NoRowsAffected}}
 
 	return rowsAff
 	{{end -}}
@@ -154,9 +157,9 @@ func (q {{$alias.DownSingular}}Query) DeleteAllP({{if .NoContext}}exec simmer.Ex
 {{end -}}
 
 // DeleteAll deletes all matching rows.
-func (q {{$alias.DownSingular}}Query) DeleteAll({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+func (q {{$alias.DownSingular}}Query) DeleteAll({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
 	if q.Query == nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} errors.New("{{.PkgName}}: no {{$alias.DownSingular}}Query provided for delete all")
+		return {{if not $options.NoRowsAffected}}0, {{end -}} errors.New("{{$options.PkgName}}: no {{$alias.DownSingular}}Query provided for delete all")
 	}
 
 	{{if $soft -}}
@@ -170,50 +173,50 @@ func (q {{$alias.DownSingular}}Query) DeleteAll({{if .NoContext}}exec simmer.Exe
 	queries.SetDelete(q.Query)
 	{{- end}}
 
-	{{if .NoRowsAffected -}}
-		{{if .NoContext -}}
+	{{if $options.NoRowsAffected -}}
+		{{if $options.NoContext -}}
 	_, err := q.Query.Exec(exec)
 		{{else -}}
 	_, err := q.Query.ExecContext(ctx, exec)
 		{{end -}}
 	{{else -}}
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 	result, err := q.Query.Exec(exec)
 		{{else -}}
 	result, err := q.Query.ExecContext(ctx, exec)
 		{{end -}}
 	{{end -}}
 	if err != nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{.PkgName}}: unable to delete all from {{.Table.Name}}")
+		return {{if not $options.NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{$options.PkgName}}: unable to delete all from {{$model.Table.Name}}")
 	}
 
-	{{if not .NoRowsAffected -}}
+	{{if not $options.NoRowsAffected -}}
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "{{.PkgName}}: failed to get rows affected by deleteall for {{.Table.Name}}")
+		return 0, errors.Wrap(err, "{{$options.PkgName}}: failed to get rows affected by deleteall for {{$model.Table.Name}}")
 	}
 
 	{{end -}}
 
-	return {{if not .NoRowsAffected}}rowsAff, {{end -}} nil
+	return {{if not $options.NoRowsAffected}}rowsAff, {{end -}} nil
 }
 
-{{if .AddGlobal -}}
+{{if $options.AddGlobal -}}
 // DeleteAllG deletes all rows in the slice.
-func (o {{$alias.UpSingular}}Slice) DeleteAllG({{if not .NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
-	return o.DeleteAll({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
+func (o {{$alias.UpSingular}}Slice) DeleteAllG({{if not $options.NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+	return o.DeleteAll({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
 }
 
 {{end -}}
 
-{{if .AddPanic -}}
+{{if $options.AddPanic -}}
 // DeleteAllP deletes all rows in the slice, using an executor, and panics on error.
-func (o {{$alias.UpSingular}}Slice) DeleteAllP({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not .NoRowsAffected}}int64{{end -}} {
-	{{if not .NoRowsAffected}}rowsAff, {{end -}} err := o.DeleteAll({{if not .NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
+func (o {{$alias.UpSingular}}Slice) DeleteAllP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if not $options.NoRowsAffected}}int64{{end -}} {
+	{{if not $options.NoRowsAffected}}rowsAff, {{end -}} err := o.DeleteAll({{if not $options.NoContext}}ctx, {{end -}} exec{{if $soft}}, hardDelete{{end}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
-	{{- if not .NoRowsAffected}}
+	{{- if not $options.NoRowsAffected}}
 
 	return rowsAff
 	{{end -}}
@@ -221,14 +224,14 @@ func (o {{$alias.UpSingular}}Slice) DeleteAllP({{if .NoContext}}exec simmer.Exec
 
 {{end -}}
 
-{{if and .AddGlobal .AddPanic -}}
+{{if and $options.AddGlobal $options.AddPanic -}}
 // DeleteAllGP deletes all rows in the slice, and panics on error.
-func (o {{$alias.UpSingular}}Slice) DeleteAllGP({{if not .NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if not .NoRowsAffected}}int64{{end -}} {
-	{{if not .NoRowsAffected}}rowsAff, {{end -}} err := o.DeleteAll({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
+func (o {{$alias.UpSingular}}Slice) DeleteAllGP({{if not $options.NoContext}}ctx context.Context{{if $soft}}, hardDelete bool{{end}}{{else}}{{if $soft}}hardDelete bool{{end}}{{end}}) {{if not $options.NoRowsAffected}}int64{{end -}} {
+	{{if not $options.NoRowsAffected}}rowsAff, {{end -}} err := o.DeleteAll({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}{{if $soft}}, hardDelete{{end}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
-	{{- if not .NoRowsAffected}}
+	{{- if not $options.NoRowsAffected}}
 
 	return rowsAff
 	{{end -}}
@@ -237,16 +240,16 @@ func (o {{$alias.UpSingular}}Slice) DeleteAllGP({{if not .NoContext}}ctx context
 {{end -}}
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o {{$alias.UpSingular}}Slice) DeleteAll({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if .NoRowsAffected}}error{{else}}(int64, error){{end -}} {
+func (o {{$alias.UpSingular}}Slice) DeleteAll({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}{{if $soft}}, hardDelete bool{{end}}) {{if $options.NoRowsAffected}}error{{else}}(int64, error){{end -}} {
 	if len(o) == 0 {
-		return {{if not .NoRowsAffected}}0, {{end -}} nil
+		return {{if not $options.NoRowsAffected}}0, {{end -}} nil
 	}
 
-	{{if not .NoHooks -}}
+	{{if not $options.NoHooks -}}
 	if len({{$alias.DownSingular}}BeforeDeleteHooks) != 0 {
 		for _, obj := range o {
-			if err := obj.doBeforeDeleteHooks({{if not .NoContext}}ctx, {{end -}} exec); err != nil {
-				return {{if not .NoRowsAffected}}0, {{end -}} err
+			if err := obj.doBeforeDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+				return {{if not $options.NoRowsAffected}}0, {{end -}} err
 			}
 		}
 	}
@@ -263,7 +266,7 @@ func (o {{$alias.UpSingular}}Slice) DeleteAll({{if .NoContext}}exec simmer.Execu
     		args = append(args, pkeyArgs...)
     	}
 		sql = "DELETE FROM {{$schemaTable}} WHERE " +
-			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o))
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if $data.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o))
 	} else {
 		currTime := time.Now().In(simmer.GetLocation())
 		for _, obj := range o {
@@ -273,8 +276,8 @@ func (o {{$alias.UpSingular}}Slice) DeleteAll({{if .NoContext}}exec simmer.Execu
 		}
 		wl := []string{"deleted_at"}
 		sql = fmt.Sprintf("UPDATE {{$schemaTable}} SET %s WHERE " +
-			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if .Dialect.UseIndexPlaceholders}}2{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o)),
-			strmangle.SetParamNames("{{.LQ}}", "{{.RQ}}", {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, wl),
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if $data.Dialect.UseIndexPlaceholders}}2{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o)),
+			strmangle.SetParamNames("{{$data.LQ}}", "{{$data.RQ}}", {{if $data.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, wl),
 		)
 		args = append([]interface{}{currTime}, args...)
 	}
@@ -286,10 +289,10 @@ func (o {{$alias.UpSingular}}Slice) DeleteAll({{if .NoContext}}exec simmer.Execu
 	}
 
 	sql := "DELETE FROM {{$schemaTable}} WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), {{if $data.Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns, len(o))
 	{{- end}}
 
-	{{if .NoContext -}}
+	{{if $options.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, sql)
 		fmt.Fprintln(simmer.DebugWriter, args)
@@ -302,40 +305,40 @@ func (o {{$alias.UpSingular}}Slice) DeleteAll({{if .NoContext}}exec simmer.Execu
 	}
 	{{end -}}
 
-	{{if .NoRowsAffected -}}
-		{{if .NoContext -}}
+	{{if $options.NoRowsAffected -}}
+		{{if $options.NoContext -}}
 	_, err := exec.Exec(sql, args...)
 		{{else -}}
 	_, err := exec.ExecContext(ctx, sql, args...)
 		{{end -}}
 	{{else -}}
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 	result, err := exec.Exec(sql, args...)
 		{{else -}}
 	result, err := exec.ExecContext(ctx, sql, args...)
 		{{end -}}
 	{{end -}}
 	if err != nil {
-		return {{if not .NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{.PkgName}}: unable to delete all from {{$alias.DownSingular}} slice")
+		return {{if not $options.NoRowsAffected}}0, {{end -}} errors.Wrap(err, "{{$options.PkgName}}: unable to delete all from {{$alias.DownSingular}} slice")
 	}
 
-	{{if not .NoRowsAffected -}}
+	{{if not $options.NoRowsAffected -}}
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "{{.PkgName}}: failed to get rows affected by deleteall for {{.Table.Name}}")
+		return 0, errors.Wrap(err, "{{$options.PkgName}}: failed to get rows affected by deleteall for {{$model.Table.Name}}")
 	}
 
 	{{end -}}
 
-	{{if not .NoHooks -}}
+	{{if not $options.NoHooks -}}
 	if len({{$alias.DownSingular}}AfterDeleteHooks) != 0 {
 		for _, obj := range o {
-			if err := obj.doAfterDeleteHooks({{if not .NoContext}}ctx, {{end -}} exec); err != nil {
-				return {{if not .NoRowsAffected}}0, {{end -}} err
+			if err := obj.doAfterDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+				return {{if not $options.NoRowsAffected}}0, {{end -}} err
 			}
 		}
 	}
 	{{- end}}
 
-	return {{if not .NoRowsAffected}}rowsAff, {{end -}} nil
+	return {{if not $options.NoRowsAffected}}rowsAff, {{end -}} nil
 }
