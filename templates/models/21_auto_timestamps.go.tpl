@@ -1,12 +1,15 @@
 {{- define "timestamp_insert_helper" -}}
-	{{- if not .NoAutoTimestamps -}}
-	{{- $colNames := .Table.Columns | columnNames -}}
+	{{- $data := .Data -}}
+	{{- $model := .Model -}}
+	{{- $options := .Options -}}
+	{{- if not $options.NoAutoTimestamps -}}
+	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "created_at" "updated_at"}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 		currTime := time.Now().In(simmer.GetLocation())
-		{{range $ind, $col := .Table.Columns}}
+		{{range $ind, $col := $model.Table.Columns}}
 			{{- if eq $col.Name "created_at" -}}
 				{{- if eq $col.Type "time.Time" }}
 		if o.CreatedAt.IsZero() {
@@ -30,21 +33,24 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	}
 		{{end -}}
 	{{end}}
 	{{- end}}
 {{- end -}}
 {{- define "timestamp_update_helper" -}}
-	{{- if not .NoAutoTimestamps -}}
-	{{- $colNames := .Table.Columns | columnNames -}}
+	{{- $data := .Data -}}
+	{{- $model := .Model -}}
+	{{- $options := .Options -}}
+	{{- if not $options.NoAutoTimestamps -}}
+	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "updated_at"}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 		currTime := time.Now().In(simmer.GetLocation())
-		{{range $ind, $col := .Table.Columns}}
+		{{range $ind, $col := $model.Table.Columns}}
 			{{- if eq $col.Name "updated_at" -}}
 				{{- if eq $col.Type "time.Time"}}
 		o.UpdatedAt = currTime
@@ -53,21 +59,24 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	}
 		{{end -}}
 	{{end}}
 	{{- end}}
 {{end -}}
 {{- define "timestamp_upsert_helper" -}}
-	{{- if not .NoAutoTimestamps -}}
-	{{- $colNames := .Table.Columns | columnNames -}}
+	{{- $data := .Data -}}
+	{{- $model := .Model -}}
+	{{- $options := .Options -}}
+	{{- if not $options.NoAutoTimestamps -}}
+	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "created_at" "updated_at"}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 	currTime := time.Now().In(simmer.GetLocation())
-		{{range $ind, $col := .Table.Columns}}
+		{{range $ind, $col := $model.Table.Columns}}
 			{{- if eq $col.Name "created_at" -}}
 				{{- if eq $col.Type "time.Time"}}
 	if o.CreatedAt.IsZero() {
@@ -87,7 +96,7 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not .NoContext -}}
+		{{if not $options.NoContext -}}
 	}
 		{{end -}}
 	{{end}}

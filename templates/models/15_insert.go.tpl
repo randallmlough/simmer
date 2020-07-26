@@ -73,7 +73,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO {{$schemaTable}} ({{.LQ}}%s{{.RQ}}) %%sVALUES (%s)%%s", strings.Join(wl, "{{.RQ}},{{.LQ}}"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO {{$schemaTable}} ({{$data.LQ}}%s{{$data.RQ}}) %%sVALUES (%s)%%s", strings.Join(wl, "{{$data.RQ}},{{$data.LQ}}"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
 			{{if $data.Dialect.UseDefaultKeyword -}}
 			cache.query = "INSERT INTO {{$schemaTable}} %sDEFAULT VALUES%s"
@@ -86,12 +86,12 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 
 		if len(cache.retMapping) != 0 {
 			{{if $data.Dialect.UseLastInsertID -}}
-			cache.retQuery = fmt.Sprintf("SELECT {{.LQ}}%s{{.RQ}} FROM {{$schemaTable}} WHERE %s", strings.Join(returnColumns, "{{.RQ}},{{.LQ}}"), strmangle.WhereClause("{{.LQ}}", "{{.RQ}}", {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT {{$data.LQ}}%s{{$data.RQ}} FROM {{$schemaTable}} WHERE %s", strings.Join(returnColumns, "{{$data.RQ}},{{$data.LQ}}"), strmangle.WhereClause("{{$data.LQ}}", "{{$data.RQ}}", {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns))
 			{{else -}}
 				{{if $data.Dialect.UseOutputClause -}}
-			queryOutput = fmt.Sprintf("OUTPUT INSERTED.{{.LQ}}%s{{.RQ}} ", strings.Join(returnColumns, "{{.RQ}},INSERTED.{{.LQ}}"))
+			queryOutput = fmt.Sprintf("OUTPUT INSERTED.{{$data.LQ}}%s{{$data.RQ}} ", strings.Join(returnColumns, "{{$data.RQ}},INSERTED.{{$data.LQ}}"))
 				{{else -}}
-			queryReturning = fmt.Sprintf(" RETURNING {{.LQ}}%s{{.RQ}}", strings.Join(returnColumns, "{{.RQ}},{{.LQ}}"))
+			queryReturning = fmt.Sprintf(" RETURNING {{$data.LQ}}%s{{$data.RQ}}", strings.Join(returnColumns, "{{$data.RQ}},{{$data.LQ}}"))
 				{{end -}}
 			{{end -}}
 		}
@@ -131,7 +131,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 		{{end -}}
 	{{- end}}
 	if err != nil {
-		return errors.Wrap(err, "{{.PkgName}}: unable to insert into {{.Table.Name}}")
+		return errors.Wrap(err, "{{$options.PkgName}}: unable to insert into {{$model.Table.Name}}")
 	}
 
 	{{if $canLastInsertID -}}
@@ -183,7 +183,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	{{end -}}
 	if err != nil {
-		return errors.Wrap(err, "{{.PkgName}}: unable to populate default values for {{.Table.Name}}")
+		return errors.Wrap(err, "{{$options.PkgName}}: unable to populate default values for {{$model.Table.Name}}")
 	}
 	{{else}}
 	if len(cache.retMapping) != 0 {
@@ -201,7 +201,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "{{.PkgName}}: unable to insert into {{.Table.Name}}")
+		return errors.Wrap(err, "{{$options.PkgName}}: unable to insert into {{$model.Table.Name}}")
 	}
 	{{end}}
 
