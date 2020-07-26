@@ -1,18 +1,21 @@
-{{- if .Table.IsJoinTable -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if $model.Table.IsJoinTable -}}
 {{- else -}}
-	{{- $table := .Table }}
-	{{- range $rel := .Table.ToManyRelationships -}}
-		{{- $ltable := $.Aliases.Table $rel.Table -}}
-		{{- $ftable := $.Aliases.Table $rel.ForeignTable -}}
-		{{- $relAlias := $.Aliases.ManyRelationship $rel.ForeignTable $rel.Name $rel.JoinTable $rel.JoinLocalFKeyName -}}
+	{{- $table := $model.Table }}
+	{{- range $rel := $model.Table.ToManyRelationships -}}
+		{{- $ltable := $data.Aliases.Table $rel.Table -}}
+		{{- $ftable := $data.Aliases.Table $rel.ForeignTable -}}
+		{{- $relAlias := $data.Aliases.ManyRelationship $rel.ForeignTable $rel.Name $rel.JoinTable $rel.JoinLocalFKeyName -}}
 		{{- $colField := $ltable.Column $rel.Column -}}
 		{{- $fcolField := $ftable.Column $rel.ForeignColumn -}}
 		{{- $usesPrimitives := usesPrimitives $.Tables $rel.Table $rel.Column $rel.ForeignTable $rel.ForeignColumn -}}
 		{{- $schemaForeignTable := .ForeignTable | $.SchemaTable }}
 func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	var err error
-	{{if not $.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -23,7 +26,7 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 		t.Errorf("Unable to randomize {{$ltable.UpSingular}} struct: %s", err)
 	}
 
-	if err := a.Insert({{if not $.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -43,10 +46,10 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	queries.Assign(&c.{{$fcolField}}, a.{{$colField}})
 		{{- end}}
 	{{- end}}
-	if err = b.Insert({{if not $.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = b.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = c.Insert({{if not $.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = c.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -61,7 +64,7 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	}
 	{{end}}
 
-	check, err := a.{{$relAlias.Local}}().All({{if not $.NoContext}}ctx, {{end -}} tx)
+	check, err := a.{{$relAlias.Local}}().All({{if not $options.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +96,7 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	}
 
 	slice := {{$ltable.UpSingular}}Slice{&a}
-	if err = a.L.Load{{$relAlias.Local}}({{if not $.NoContext}}ctx, {{end -}} tx, false, (*[]*{{$ltable.UpSingular}})(&slice), nil); err != nil {
+	if err = a.L.Load{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, false, (*[]*{{$ltable.UpSingular}})(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(a.R.{{$relAlias.Local}}); got != 2 {
@@ -101,7 +104,7 @@ func test{{$ltable.UpSingular}}ToMany{{$relAlias.Local}}(t *testing.T) {
 	}
 
 	a.R.{{$relAlias.Local}} = nil
-	if err = a.L.Load{{$relAlias.Local}}({{if not $.NoContext}}ctx, {{end -}} tx, true, &a, nil); err != nil {
+	if err = a.L.Load{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, true, &a, nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(a.R.{{$relAlias.Local}}); got != 2 {
