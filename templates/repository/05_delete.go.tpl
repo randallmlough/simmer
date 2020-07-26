@@ -12,7 +12,7 @@ func (db *{{$modelNameUppercase}}) Delete{{$modelNameUppercase}}(ctx context.Con
 		return errors.Wrap(err, "{{$modelName}} validation failed")
 	}
 
-	{{- if and $.Data.AddSoftDeletes $canSoftDelete}}
+	{{- if and $options.AddSoftDeletes $canSoftDelete}}
 	o := initOptions(opts...)
 	{{- end}}
 	if _, err := m.Delete(ctx, db.getExecutor(ctx){{if and $options.AddSoftDeletes $canSoftDelete}}, o.HardDelete{{end}}); err != nil {
