@@ -1,4 +1,7 @@
-{{- $alias := .Aliases.Table .Table.Name}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name}}
 func test{{$alias.UpPlural}}Reload(t *testing.T) {
 	t.Parallel()
 
@@ -9,14 +12,14 @@ func test{{$alias.UpPlural}}Reload(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	if err = o.Reload({{if not .NoContext}}ctx, {{end -}} tx); err != nil {
+	if err = o.Reload({{if not $options.NoContext}}ctx, {{end -}} tx); err != nil {
 		t.Error(err)
 	}
 }
@@ -31,16 +34,16 @@ func test{{$alias.UpPlural}}ReloadAll(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if .NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not .NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
 	slice := {{$alias.UpSingular}}Slice{{"{"}}o{{"}"}}
 
-	if err = slice.ReloadAll({{if not .NoContext}}ctx, {{end -}} tx); err != nil {
+	if err = slice.ReloadAll({{if not $options.NoContext}}ctx, {{end -}} tx); err != nil {
 		t.Error(err)
 	}
 }
