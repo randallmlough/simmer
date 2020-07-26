@@ -1,16 +1,18 @@
-{{- $model := .Model.Name | singular -}}
-{{- $modelUppercase := $model | titleCase }}
-{{- $canSoftDelete := .Model.Table.CanSoftDelete }}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $modelName := $model.Name | singular -}}
+{{- $modelNameUppercase := $modelName | titleCase }}
+{{- $canSoftDelete := $model.Table.CanSoftDelete }}
 
-{{- range .Model.Table.Constraints.AllIndexed}}
+{{- range $model.Table.Constraints.AllIndexed}}
 {{ $columnUppercase := .ColumnName | titleCase}}
 {{ $arg := .ColumnName | camelCase}}
-// FindBy{{$columnUppercase}} will find a {{$model}} record with the given {{$arg}}
-func (db *{{$modelUppercase}}) FindBy{{$columnUppercase}}(ctx context.Context, {{$arg}} {{.Type}}, opts ...Option) (*models.{{$modelUppercase}}, error) {
+// FindBy{{$columnUppercase}} will find a {{$modelName}} record with the given {{$arg}}
+func (db *{{$modelNameUppercase}}) FindBy{{$columnUppercase}}(ctx context.Context, {{$arg}} {{.Type}}, opts ...Option) (*models.{{$modelNameUppercase}}, error) {
     o := initOptions(opts...)
-    {{$model}}, err := db.Select{{$modelUppercase}}(ctx,
+    {{$modelName}}, err := db.Select{{$modelNameUppercase}}(ctx,
         Select(o.Columns.Cols...),
-        Where(`{{.ColumnName}} = ?{{if and $.Data.AddSoftDeletes $canSoftDelete}} and "deleted_at" is null{{end}}`, {{$arg}}),
+        Where(`{{.ColumnName}} = ?{{if and $options.AddSoftDeletes $canSoftDelete}} and "deleted_at" is null{{end}}`, {{$arg}}),
     )
     if err != nil {
     	if errors.Cause(err) == sql.ErrNoRows {
@@ -18,6 +20,6 @@ func (db *{{$modelUppercase}}) FindBy{{$columnUppercase}}(ctx context.Context, {
 		}
         return nil, errors.Wrap(err, "{{$arg}}: unable to select from {{$.Model.Table.Name}}")
     }
-    return {{$model}}, nil
+    return {{$modelName}}, nil
 }
 {{- end }}
