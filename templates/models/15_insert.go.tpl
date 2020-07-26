@@ -1,29 +1,32 @@
-{{- $alias := .Aliases.Table .Table.Name}}
-{{- $schemaTable := .Table.Name | .SchemaTable}}
-{{if .AddGlobal -}}
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name}}
+{{- $schemaTable := $model.Table.Name | $data.SchemaTable}}
+{{if $options.AddGlobal -}}
 // InsertG a single record. See Insert for whitelist behavior description.
-func (o *{{$alias.UpSingular}}) InsertG({{if not .NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) error {
-	return o.Insert({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns)
+func (o *{{$alias.UpSingular}}) InsertG({{if not $options.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) error {
+	return o.Insert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns)
 }
 
 {{end -}}
 
-{{if .AddPanic -}}
+{{if $options.AddPanic -}}
 // InsertP a single record using an executor, and panics on error. See Insert
 // for whitelist behavior description.
-func (o *{{$alias.UpSingular}}) InsertP({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) {
-	if err := o.Insert({{if not .NoContext}}ctx, {{end -}} exec, columns); err != nil {
+func (o *{{$alias.UpSingular}}) InsertP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) {
+	if err := o.Insert({{if not $options.NoContext}}ctx, {{end -}} exec, columns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
 
 {{end -}}
 
-{{if and .AddGlobal .AddPanic -}}
+{{if and $options.AddGlobal $options.AddPanic -}}
 // InsertGP a single record, and panics on error. See Insert for whitelist
 // behavior description.
-func (o *{{$alias.UpSingular}}) InsertGP({{if not .NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) {
-	if err := o.Insert({{if .NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns); err != nil {
+func (o *{{$alias.UpSingular}}) InsertGP({{if not $options.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) {
+	if err := o.Insert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -32,16 +35,16 @@ func (o *{{$alias.UpSingular}}) InsertGP({{if not .NoContext}}ctx context.Contex
 
 // Insert a single record using an executor.
 // See simmer.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) error {
+func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) error {
 	if o == nil {
-		return errors.New("{{.PkgName}}: no {{.Table.Name}} provided for insertion")
+		return errors.New("{{$options.PkgName}}: no {{$model.Table.Name}} provided for insertion")
 	}
 
 	var err error
 	{{- template "timestamp_insert_helper" . }}
 
-	{{if not .NoHooks -}}
-	if err := o.doBeforeInsertHooks({{if not .NoContext}}ctx, {{end -}} exec); err != nil {
+	{{if not $options.NoHooks -}}
+	if err := o.doBeforeInsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
 		return err
 	}
 	{{- end}}
@@ -72,7 +75,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 		if len(wl) != 0 {
 			cache.query = fmt.Sprintf("INSERT INTO {{$schemaTable}} ({{.LQ}}%s{{.RQ}}) %%sVALUES (%s)%%s", strings.Join(wl, "{{.RQ}},{{.LQ}}"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			{{if .Dialect.UseDefaultKeyword -}}
+			{{if $data.Dialect.UseDefaultKeyword -}}
 			cache.query = "INSERT INTO {{$schemaTable}} %sDEFAULT VALUES%s"
 			{{else -}}
 			cache.query = "INSERT INTO {{$schemaTable}} () VALUES ()%s%s"
@@ -82,10 +85,10 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			{{if .Dialect.UseLastInsertID -}}
+			{{if $data.Dialect.UseLastInsertID -}}
 			cache.retQuery = fmt.Sprintf("SELECT {{.LQ}}%s{{.RQ}} FROM {{$schemaTable}} WHERE %s", strings.Join(returnColumns, "{{.RQ}},{{.LQ}}"), strmangle.WhereClause("{{.LQ}}", "{{.RQ}}", {{if .Dialect.UseIndexPlaceholders}}1{{else}}0{{end}}, {{$alias.DownSingular}}PrimaryKeyColumns))
 			{{else -}}
-				{{if .Dialect.UseOutputClause -}}
+				{{if $data.Dialect.UseOutputClause -}}
 			queryOutput = fmt.Sprintf("OUTPUT INSERTED.{{.LQ}}%s{{.RQ}} ", strings.Join(returnColumns, "{{.RQ}},INSERTED.{{.LQ}}"))
 				{{else -}}
 			queryReturning = fmt.Sprintf(" RETURNING {{.LQ}}%s{{.RQ}}", strings.Join(returnColumns, "{{.RQ}},{{.LQ}}"))
@@ -99,7 +102,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	value := reflect.Indirect(reflect.ValueOf(o))
 	vals := queries.ValuesFromMapping(value, cache.valueMapping)
 
-	{{if .NoContext -}}
+	{{if $options.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, cache.query)
 		fmt.Fprintln(simmer.DebugWriter, vals)
@@ -112,16 +115,16 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	}
 	{{end -}}
 
-	{{if .Dialect.UseLastInsertID -}}
-	{{- $canLastInsertID := .Table.CanLastInsertID -}}
+	{{if $data.Dialect.UseLastInsertID -}}
+	{{- $canLastInsertID := $model.Table.CanLastInsertID -}}
 	{{if $canLastInsertID -}}
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 	result, err := exec.Exec(cache.query, vals...)
 		{{else -}}
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 		{{end -}}
 	{{else -}}
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 	_, err = exec.Exec(cache.query, vals...)
 		{{else -}}
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
@@ -146,8 +149,8 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 		return ErrSyncFail
 	}
 
-	{{$colName := index .Table.PKey.Columns 0 -}}
-	{{- $col := .Table.GetColumn $colName -}}
+	{{$colName := index $model.Table.PKey.Columns 0 -}}
+	{{- $col := $model.Table.GetColumn $colName -}}
 	{{- $colTitled := $colName | titleCase}}
 	o.{{$colTitled}} = {{$col.Type}}(lastID)
 	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == {{$alias.DownSingular}}Mapping["{{$colName}}"] {
@@ -156,12 +159,12 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	{{- end}}
 
 	identifierCols = []interface{}{
-		{{range .Table.PKey.Columns -}}
+		{{range $model.Table.PKey.Columns -}}
 		o.{{$alias.Column .}},
 		{{end -}}
 	}
 
-	{{if .NoContext -}}
+	{{if $options.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, cache.retQuery)
 		fmt.Fprintln(simmer.DebugWriter, identifierCols...)
@@ -174,7 +177,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	}
 	{{end -}}
 
-	{{if .NoContext -}}
+	{{if $options.NoContext -}}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	{{else -}}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
@@ -184,13 +187,13 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	}
 	{{else}}
 	if len(cache.retMapping) != 0 {
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 		err = exec.QueryRow(cache.query, vals...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 		{{else -}}
 		err = exec.QueryRowContext(ctx, cache.query, vals...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 		{{end -}}
 	} else {
-		{{if .NoContext -}}
+		{{if $options.NoContext -}}
 		_, err = exec.Exec(cache.query, vals...)
 		{{else -}}
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
@@ -202,7 +205,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec simmer.Executor{{el
 	}
 	{{end}}
 
-{{if .Dialect.UseLastInsertID -}}
+{{if $data.Dialect.UseLastInsertID -}}
 CacheNoHooks:
 {{- end}}
 	if !cached {
@@ -211,8 +214,8 @@ CacheNoHooks:
 		{{$alias.DownSingular}}InsertCacheMut.Unlock()
 	}
 
-	{{if not .NoHooks -}}
-	return o.doAfterInsertHooks({{if not .NoContext}}ctx, {{end -}} exec)
+	{{if not $options.NoHooks -}}
+	return o.doAfterInsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec)
 	{{- else -}}
 	return nil
 	{{- end}}
