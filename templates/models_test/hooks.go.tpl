@@ -1,46 +1,49 @@
-{{- if not .NoHooks -}}
-{{- $alias := .Aliases.Table .Table.Name}}
-func {{$alias.DownSingular}}BeforeInsertHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+{{- $data := .Data -}}
+{{- $model := .Model -}}
+{{- $options := .Options -}}
+{{- if not $options.NoHooks -}}
+{{- $alias := $data.Aliases.Table $model.Table.Name}}
+func {{$alias.DownSingular}}BeforeInsertHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}AfterInsertHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}AfterInsertHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}AfterSelectHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}AfterSelectHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}BeforeUpdateHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}BeforeUpdateHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}AfterUpdateHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}AfterUpdateHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}BeforeDeleteHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}BeforeDeleteHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}AfterDeleteHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}AfterDeleteHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}BeforeUpsertHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}BeforeUpsertHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
 
-func {{$alias.DownSingular}}AfterUpsertHook({{if .NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
+func {{$alias.DownSingular}}AfterUpsertHook({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, o *{{$alias.UpSingular}}) error {
 	*o = {{$alias.UpSingular}}{}
 	return nil
 }
@@ -50,7 +53,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 
 	var err error
 
-	{{if not .NoContext}}ctx := context.Background(){{end}}
+	{{if not $options.NoContext}}ctx := context.Background(){{end}}
 	empty := &{{$alias.UpSingular}}{}
 	o := &{{$alias.UpSingular}}{}
 
@@ -60,7 +63,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	}
 
 	Add{{$alias.UpSingular}}Hook(simmer.BeforeInsertHook, {{$alias.DownSingular}}BeforeInsertHook)
-	if err = o.doBeforeInsertHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doBeforeInsertHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -69,7 +72,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}BeforeInsertHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.AfterInsertHook, {{$alias.DownSingular}}AfterInsertHook)
-	if err = o.doAfterInsertHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doAfterInsertHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -78,7 +81,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}AfterInsertHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.AfterSelectHook, {{$alias.DownSingular}}AfterSelectHook)
-	if err = o.doAfterSelectHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doAfterSelectHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -87,7 +90,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}AfterSelectHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.BeforeUpdateHook, {{$alias.DownSingular}}BeforeUpdateHook)
-	if err = o.doBeforeUpdateHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doBeforeUpdateHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -96,7 +99,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}BeforeUpdateHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.AfterUpdateHook, {{$alias.DownSingular}}AfterUpdateHook)
-	if err = o.doAfterUpdateHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doAfterUpdateHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -105,7 +108,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}AfterUpdateHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.BeforeDeleteHook, {{$alias.DownSingular}}BeforeDeleteHook)
-	if err = o.doBeforeDeleteHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doBeforeDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -114,7 +117,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}BeforeDeleteHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.AfterDeleteHook, {{$alias.DownSingular}}AfterDeleteHook)
-	if err = o.doAfterDeleteHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doAfterDeleteHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -123,7 +126,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}AfterDeleteHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.BeforeUpsertHook, {{$alias.DownSingular}}BeforeUpsertHook)
-	if err = o.doBeforeUpsertHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doBeforeUpsertHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
@@ -132,7 +135,7 @@ func test{{$alias.UpPlural}}Hooks(t *testing.T) {
 	{{$alias.DownSingular}}BeforeUpsertHooks = []{{$alias.UpSingular}}Hook{}
 
 	Add{{$alias.UpSingular}}Hook(simmer.AfterUpsertHook, {{$alias.DownSingular}}AfterUpsertHook)
-	if err = o.doAfterUpsertHooks({{if not .NoContext}}ctx, {{end -}} nil); err != nil {
+	if err = o.doAfterUpsertHooks({{if not $options.NoContext}}ctx, {{end -}} nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
