@@ -3,14 +3,14 @@
 Simmer's mission is to allow developers the ability to easily generate code based on their data models and client facing schema. Simmer can be leveraged to create a reflectionless ORM, domain driven services, conversion tools and much. Use Simmer as a task running CLI or as a library to fit your process and your needs.  
 
 ### Overview
-For most applications your data models and client data types are fairly static. You want to receive data in a specific way and store your data in a specific. In-between the request, storage, and response a number of things may happen to ensure data integrity and reliability, such as; validation, normalization, conversion, error handling and so on. It's these in between steps where a lot of boilerplate code comes in and where Simmer aims to help.
+For most applications your data models and client data types are fairly static. You want to receive data in a specific way and store your data in a specific. In-between the request, storage, and response a number of things may happen to ensure data integrity and reliability, such as; validation, normalization, conversion and so on. It's these _in-between_ steps where a lot of boilerplate code tends to live and where Simmer aims to help.
 
 ### How it works
-At a high level, Simmer is pretty simple. It's only job is to retrieve and connect your `models` to your `objects` and vice versa. 
+At a high level, Simmer is pretty simple. It's only job is to retrieve and connect your `models` to your `objects` and vice versa. What you do with that information is up to you.
 
 We gather your `models` by connecting to your SQL database to aggregate all of its tables, constraints, and relationships. 
 
-For your `objects`, Simmer will parse GraphQL files to efficiently build your client data types. Note: a GraphQL endpoint, resolvers or service isn't required for Simmer to work, we just use the `*.graphql` schema files to know what data types you want to receive. Simmer is GraphQL agnostic, it will easily work for REST endpoints and others.
+For your `objects`, Simmer will parse GraphQL files to efficiently build your client data types. Note: a GraphQL endpoint, resolvers or service isn't required for Simmer to work, we just use the `*.graphql` schema files to know what data types you want to receive. Simmer is design pattern agnostic and un-opinionated, it will easily work for GraphQL or REST APIs or any other design pattern you wish. 
 
 ## How to install
 Simmer is still in high development mode, as a result Go (Golang) must be installed and added to your path. 
@@ -30,7 +30,7 @@ Once completed make sure to `source` or restart your shell so the `simmer` comma
 ## How to use
 For the CLI tool, add a `simmer.yml` (or `.json`) config file at the root of your project directory. Add your database credentials, and the tasks your wish Simmer to run. 
 
-Once you are ready to generate your files simple invoke `simmer` in your command line
+Once you are ready to generate your files simple invoke `simmer` command in your command line
 
 ```shell script
 simmer
