@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	DBConfig   *database.Config `json:"postgres" yaml:"postgres"`
+	DBConfig   *database.Config `json:"database" yaml:"database"`
 	Migrations string
 	Schema     string
 
