@@ -1,0 +1,29 @@
+
+extend type Query {
+    user(id: ID!): User
+    users: [User]!
+    me: User
+}
+
+extend type Mutation {
+    createUser(input: UserInput!): UserPayload!
+    updateUser(id: ID!, req: UserInput!): UserPayload!
+}
+
+type User{
+    id: ID!
+    createdAt: Time!
+    updatedAt: Time!
+    deletedAt: Time
+    name: String
+}
+
+type UserPayload {
+    success: Boolean!
+    message: String!
+    user: User
+}
+
+input UserInput{
+    name: String
+}

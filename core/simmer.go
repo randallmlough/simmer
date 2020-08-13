@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/randallmlough/simmer/data"
+	"github.com/randallmlough/simmer/schema"
 	"github.com/volatiletech/strmangle"
 	"path/filepath"
 	"strings"
 )
 
 // New creates a new state based off of the config
-func New(cfg *Config) (*Schema, error) {
-	s := &Schema{
+func New(cfg *Config) (*Simmer, error) {
+	s := &Simmer{
 		Config: cfg,
 		models: make(map[string]*Model),
 	}
@@ -26,6 +27,11 @@ func New(cfg *Config) (*Schema, error) {
 	}
 	s.Data = models
 
+	schema, err := schema.New(cfg.Schema)
+	if err != nil {
+		return nil, err
+	}
+	s.Schema = schema
 	defer func() {
 		if s.Config.Debug {
 			debugOut := struct {
@@ -45,20 +51,20 @@ func New(cfg *Config) (*Schema, error) {
 	}()
 
 	s.makeModels()
-
 	return s, nil
 }
 
-// Schema holds the global data needed by most pieces to run
-type Schema struct {
+// Simmer holds the global data needed by most pieces to run
+type Simmer struct {
 	Config  *Config
 	Data    *data.Data
+	Schema  *schema.Schema
 	Model   *Model
 	models  map[string]*Model
 	Options interface{}
 }
 
-func (s *Schema) Models() []*Model {
+func (s *Simmer) Models() []*Model {
 	models := make([]*Model, 0, len(s.models))
 	for _, model := range s.models {
 		models = append(models, model)
@@ -66,7 +72,8 @@ func (s *Schema) Models() []*Model {
 	return models
 }
 
-func (s *Schema) makeModels() {
+func (s *Simmer) makeModels() {
+
 	for _, table := range s.Data.Tables {
 		name := normalizeModelName(table.Name)
 		if model, ok := s.models[name]; ok {
@@ -75,6 +82,20 @@ func (s *Schema) makeModels() {
 			s.models[name] = &Model{
 				Name:  name,
 				Table: table,
+			}
+		}
+
+	}
+	for _, typ := range s.Schema.Types {
+		if obj := typ.Type; obj != nil {
+			name := normalizeModelName(obj.Name)
+			if model, ok := s.models[name]; ok {
+				model.Schema = typ
+			} else {
+				s.models[name] = &Model{
+					Name:   name,
+					Schema: typ,
+				}
 			}
 		}
 	}
@@ -87,7 +108,7 @@ func normalizeModelName(name string) string {
 }
 
 // Cleanup closes any resources that must be closed
-func (s *Schema) Cleanup() error {
+func (s *Simmer) Cleanup() error {
 	// Nothing here atm, used to close the driver
 	return nil
 }

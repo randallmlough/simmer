@@ -1,0 +1,38 @@
+extend type Query {
+    session: User
+}
+
+extend type Mutation {
+    register(input: RegisterInput!): AuthPayload
+    authenticate(input: AuthenticateInput!): AuthPayload
+    removeSession: Boolean!
+}
+
+type AuthPayload {
+    success: Boolean!
+    message: String!
+    user: User
+    token: String
+}
+
+type Auth{
+    user: User
+    token: String
+}
+
+input AuthInput{
+    email: String!
+    password: Password!
+    userID: String!
+}
+
+input RegisterInput{
+    name: String!
+    email: String!
+    password: Password!
+}
+
+input AuthenticateInput {
+    email: String!
+    password: Password!
+}

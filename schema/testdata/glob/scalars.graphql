@@ -1,0 +1,11 @@
+# resolves to time.Time
+scalar Time
+
+# resolves to map[string]interface{}
+scalar Map
+
+# resolves to interface{}
+scalar Any
+
+# resolves to string of type Password
+scalar Password

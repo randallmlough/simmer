@@ -64,7 +64,6 @@ func (g Groups) newGroup(groupName, packageName string) {
 	}
 }
 func (m *Plugin) MutateConfig(cfg *config.Config) error {
-	binder := cfg.NewBinder()
 	var (
 		modelDir,
 		defaultGroup,
@@ -80,6 +79,7 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 	}
 	groups := make(Groups)
 
+	binder := cfg.NewBinder()
 	hasEntity := false
 	for _, schemaType := range cfg.Schema.Types {
 		if cfg.Models.UserDefined(schemaType.Name) {

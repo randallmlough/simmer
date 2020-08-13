@@ -160,13 +160,13 @@ func FillAliases(a *Aliases, tables []database.Table) {
 }
 
 // Table gets a table alias, panics if not found.
-func (a Aliases) Table(table string) TableAlias {
+func (a Aliases) Table(table string) *TableAlias {
 	t, ok := a.Tables[table]
 	if !ok {
-		panic("could not find table aliases for: " + table)
+		return nil
 	}
 
-	return t
+	return &t
 }
 
 // Column get's a column's aliased name, panics if not found.

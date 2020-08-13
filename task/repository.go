@@ -21,7 +21,7 @@ func (r *Repository) Name() string {
 	return "repository"
 }
 
-func (r *Repository) Run(schema *core.Schema) error {
+func (r *Repository) Run(schema *core.Simmer) error {
 
 	tpls, err := templates.LoadTemplates(r.TemplateDirs, r.Name())
 	if err != nil {

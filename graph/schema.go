@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"github.com/iancoleman/strcase"
 	"github.com/vektah/gqlparser/v2/ast"
 	"go/types"
 	"strings"
@@ -43,31 +42,6 @@ type Scalar struct {
 	Name        string
 }
 
-type Type struct {
-	Name       string
-	PluralName string
-	//BoilerModel           model.Model
-	PrimaryKeyType        string
-	Fields                []*Field
-	IsNormal              bool
-	IsInput               bool
-	IsCreateInput         bool
-	IsUpdateInput         bool
-	IsNormalInput         bool
-	IsPayload             bool
-	IsWhere               bool
-	IsFilter              bool
-	IsPreloadable         bool
-	HasOrganizationID     bool
-	HasUserOrganizationID bool
-	HasUserID             bool
-	HasStringPrimaryID    bool
-	// other stuff
-	Description string
-	PureFields  []*ast.FieldDefinition
-	Implements  []string
-}
-
 type Field struct {
 	Name               string
 	PluralName         string
@@ -92,6 +66,30 @@ type Field struct {
 	Tag         string
 }
 
+type Type struct {
+	Name                  string
+	PluralName            string
+	PrimaryKeyType        string
+	Fields                []*Field
+	IsNormal              bool
+	IsInput               bool
+	IsCreateInput         bool
+	IsUpdateInput         bool
+	IsNormalInput         bool
+	IsPayload             bool
+	IsWhere               bool
+	IsFilter              bool
+	IsPreloadable         bool
+	HasOrganizationID     bool
+	HasUserOrganizationID bool
+	HasUserID             bool
+	HasStringPrimaryID    bool
+	// other stuff
+	Description string
+	PureFields  []*ast.FieldDefinition
+	Implements  []string
+}
+
 func getExtrasFromSchema(schema *ast.Schema) (interfaces []*Interface, enums []*Enum, scalars []*Scalar) {
 	for _, schemaType := range schema.Types {
 		switch schemaType.Kind {
@@ -102,14 +100,12 @@ func getExtrasFromSchema(schema *ast.Schema) (interfaces []*Interface, enums []*
 			})
 		case ast.Enum:
 			it := &Enum{
-				Name: schemaType.Name,
-
+				Name:        schemaType.Name,
 				Description: schemaType.Description,
 			}
 			for _, v := range schemaType.EnumValues {
 				it.Values = append(it.Values, &EnumValue{
 					Name:        v.Name,
-					NameLower:   strcase.ToLowerCamel(strings.ToLower(v.Name)),
 					Description: v.Description,
 				})
 			}

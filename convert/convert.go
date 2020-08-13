@@ -438,9 +438,6 @@ func enhanceModelsWithFields(enums []*Enum, schema *ast.Schema, cfg *config.Conf
 			if err != nil {
 				fmt.Println("Could not get field type from graphql schema: ", err)
 			}
-			if m.Name == "RegisterInput" {
-				fmt.Println("FIELD TYPE", typ)
-			}
 			name := field.Name
 			if nameOveride := cfg.Models[m.Name].Fields[field.Name].FieldName; nameOveride != "" {
 				// TODO: map overrides to sqlboiler the other way around?

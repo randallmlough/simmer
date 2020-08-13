@@ -18,7 +18,7 @@ import (
 	_ "github.com/randallmlough/simmer/database/mocks"
 )
 
-var state *Schema
+var state *Simmer
 var rgxHasSpaces = regexp.MustCompile(`^\s+`)
 
 func TestNew(t *testing.T) {
@@ -177,7 +177,7 @@ func outputCompileErrors(buf *bytes.Buffer, outFolder string) {
 }
 
 func TestProcessTypeReplacements(t *testing.T) {
-	s := new(Schema)
+	s := new(Simmer)
 	s.Config = &Config{}
 	s.Config.Imports.BasedOnType = make(map[string]importers.Set)
 	domainStr := "a_domain"

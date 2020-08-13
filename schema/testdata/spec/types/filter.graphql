@@ -1,0 +1,13 @@
+input Pagination{
+    limit: Int!
+    offset: Int!
+}
+
+input Filter{
+    Date: DateRange
+}
+
+input DateRange{
+    Start: Time
+    End: Time
+}

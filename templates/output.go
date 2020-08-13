@@ -93,6 +93,10 @@ func executeTemplates(e Options) error {
 		return errors.Wrap(err, "failed to initialize output folders")
 	}
 
+	set := &importers.Set{}
+	e.TemplateFuncs.AppendFunc("reserveImport", reserveImport(set, ""))
+	e.TemplateFuncs.AppendFunc("reserveThirdParty", reserveImport(set, "thirdParty"))
+
 	templates, err := ParseTemplates(e.Templates, e.IsTest, e.TemplateFuncs)
 	if err != nil {
 		return err
@@ -100,40 +104,43 @@ func executeTemplates(e Options) error {
 
 	for dir, dirExts := range groupTemplates(templates) {
 		for ext, tplNames := range dirExts {
-			out := templateByteBuffer
-			out.Reset()
-
-			isGo := filepath.Ext(ext) == ".go"
-			if isGo {
-				pkgName := e.PkgName
-				if len(dir) != 0 {
-					pkgName = filepath.Base(dir)
-				}
-				if !e.NoGeneratedHeader {
-					writeFileDisclaimer(out)
-				}
-				writePackageName(out, pkgName)
-				writeImports(out, e.ImportSet)
-			}
-
+			tempData := &bytes.Buffer{}
 			for _, tplName := range tplNames {
 
-				if err := executeTemplate(out, templates.Template, tplName, e.Data); err != nil {
+				if err := executeTemplate(tempData, templates.Template, tplName, e.Data); err != nil {
 					return errors.Wrapf(err, "failed to execute file %s", e.Filename)
 				}
 			}
+			if len(tempData.String()) != 0 {
+				out := templateByteBuffer
+				out.Reset()
+				isGo := filepath.Ext(ext) == ".go"
+				if isGo {
+					pkgName := e.PkgName
+					if len(dir) != 0 {
+						pkgName = filepath.Base(dir)
+					}
+					if !e.NoGeneratedHeader {
+						writeFileDisclaimer(out)
+					}
+					writePackageName(out, pkgName)
+					imports := importers.MergeSet(e.ImportSet, *set)
+					writeImports(out, imports)
+				}
 
-			fName := e.Filename
-			if e.IsTest {
-				fName += "_test"
-			}
-			fName += ext
-			if len(dir) != 0 {
-				fName = filepath.Join(dir, fName)
-			}
+				out.Write(tempData.Bytes())
+				fName := e.Filename
+				if e.IsTest {
+					fName += "_test"
+				}
+				fName += ext
+				if len(dir) != 0 {
+					fName = filepath.Join(dir, fName)
+				}
 
-			if err := writeFile(e.OutFolder, fName, out, isGo); err != nil {
-				return err
+				if err := writeFile(e.OutFolder, fName, out, isGo); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -146,6 +153,9 @@ func executeSingletonTemplates(e Options) error {
 	if err := initOutFolders(e.Templates, e.OutFolder, e.Wipe); err != nil {
 		return errors.Wrap(err, "failed to initialize output folders")
 	}
+	set := &importers.Set{}
+	e.TemplateFuncs.AppendFunc("reserveImport", reserveImport(set, ""))
+	e.TemplateFuncs.AppendFunc("reserveThirdParty", reserveImport(set, "thirdParty"))
 
 	templates, err := ParseTemplates(e.Templates, e.IsTest, e.TemplateFuncs)
 	if err != nil {
@@ -162,32 +172,37 @@ func executeSingletonTemplates(e Options) error {
 		dir, fName := filepath.Split(normalized)
 		fName = fName[:strings.IndexByte(fName, '.')]
 
-		out.Reset()
-
-		if isGo {
-			imps := importers.Set{
-				Standard:   e.ImportNamedSet[DenormalizeSlashes(fName)].Standard,
-				ThirdParty: e.ImportNamedSet[DenormalizeSlashes(fName)].ThirdParty,
-			}
-
-			pkgName := e.PkgName
-			if !usePkg {
-				pkgName = filepath.Base(dir)
-			}
-			if !e.NoGeneratedHeader {
-				writeFileDisclaimer(out)
-			}
-			writePackageName(out, pkgName)
-			writeImports(out, imps)
-		}
-
-		if err := executeTemplate(out, templates.Template, tplName, e.Data); err != nil {
+		tempData := &bytes.Buffer{}
+		if err := executeTemplate(tempData, templates.Template, tplName, e.Data); err != nil {
 			return err
 		}
+		if len(tempData.String()) != 0 {
+			out.Reset()
 
-		if err := writeFile(e.OutFolder, normalized, out, isGo); err != nil {
-			return err
+			if isGo {
+				imps := importers.Set{
+					Standard:   e.ImportNamedSet[DenormalizeSlashes(fName)].Standard,
+					ThirdParty: e.ImportNamedSet[DenormalizeSlashes(fName)].ThirdParty,
+				}
+
+				pkgName := e.PkgName
+				if !usePkg {
+					pkgName = filepath.Base(dir)
+				}
+				if !e.NoGeneratedHeader {
+					writeFileDisclaimer(out)
+				}
+				writePackageName(out, pkgName)
+				imps = importers.MergeSet(imps, *set)
+				set.Reset()
+				writeImports(out, imps)
+			}
+			out.Write(tempData.Bytes())
+			if err := writeFile(e.OutFolder, normalized, out, isGo); err != nil {
+				return err
+			}
 		}
+
 	}
 
 	return nil
@@ -243,7 +258,6 @@ func executeTemplate(buf *bytes.Buffer, t *template.Template, name string, data 
 			err = errors.Errorf("failed to execute template: %s\npanic: %+v\n", name, r)
 		}
 	}()
-
 	if err := t.ExecuteTemplate(buf, name, data); err != nil {
 		return errors.Wrapf(err, "failed to execute template: %s", name)
 	}

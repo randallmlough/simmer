@@ -66,6 +66,11 @@ func (s Set) Format() []byte {
 	return buf.Bytes()
 }
 
+// Reset will reset the set by creating a new Set struct and overriding the original.
+func (s *Set) Reset() {
+	*s = Set{}
+}
+
 // SetFromInterface creates a set from a theoretical map[string]interface{}.
 // This is to load from a loosely defined configuration file.
 func SetFromInterface(intf interface{}) (Set, error) {
@@ -318,8 +323,8 @@ func AddTypeImports(a Set, typeMap map[string]Set, columnTypes []string) Set {
 func Merge(a, b Collection) Collection {
 	var c Collection
 
-	c.All = mergeSet(a.All, b.All)
-	c.Test = mergeSet(a.Test, b.Test)
+	c.All = MergeSet(a.All, b.All)
+	c.Test = MergeSet(a.Test, b.Test)
 
 	c.Singleton = mergeMap(a.Singleton, b.Singleton)
 	c.TestSingleton = mergeMap(a.TestSingleton, b.TestSingleton)
@@ -329,7 +334,7 @@ func Merge(a, b Collection) Collection {
 	return c
 }
 
-func mergeSet(a, b Set) Set {
+func MergeSet(a, b Set) Set {
 	var c Set
 
 	c.Standard = strmangle.RemoveDuplicates(combineStringSlices(a.Standard, b.Standard))
@@ -354,7 +359,7 @@ func mergeMap(a, b Map) Map {
 			m[k] = toMerge
 		}
 
-		m[k] = mergeSet(exist, toMerge)
+		m[k] = MergeSet(exist, toMerge)
 	}
 
 	return m

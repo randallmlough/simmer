@@ -43,12 +43,12 @@ func (t *Task) Name() string {
 	return t.Options.Name
 }
 
-func (t *Task) Run(schema *core.Schema) error {
+func (t *Task) Run(simmer *core.Simmer) error {
 
 	if err := t.Init(nil); err != nil {
 		return errors.Wrap(err, "failed to initialize options")
 	}
-	t.Imports = t.ConfigureImports(defaultRepositoryImports)
+	t.Imports = t.ConfigureImports(nil)
 
 	tpls, err := templates.LoadTemplates(t.TemplateDirs, t.Name())
 	if err != nil {
@@ -63,7 +63,7 @@ func (t *Task) Run(schema *core.Schema) error {
 		OutFolder:         t.OutFolder,
 		NoGeneratedHeader: t.NoGeneratedHeader,
 		PkgName:           t.PkgName,
-		Data:              schema.Data,
+		Data:              simmer,
 		Templates:         tpls,
 		TemplateFuncs:     tplsFuncs,
 		IsSingleton:       true,
@@ -78,7 +78,7 @@ func (t *Task) Run(schema *core.Schema) error {
 			OutFolder:         t.OutFolder,
 			NoGeneratedHeader: t.NoGeneratedHeader,
 			PkgName:           t.PkgName,
-			Data:              schema.Data,
+			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
 			IsSingleton:       true,
@@ -88,21 +88,23 @@ func (t *Task) Run(schema *core.Schema) error {
 		}
 	}
 
-	for _, model := range schema.Models() {
+	for _, model := range simmer.Models() {
 
-		schema.Model = model
+		simmer.Model = model
 		fname := model.Name
 		if t.PluralFileNames {
 			fname = strmangle.Plural(fname)
 		}
 
+		imps := t.Imports
+
 		if err := templates.Render(templates.Options{
 			Filename:          fname,
-			ImportSet:         t.Imports.All,
+			ImportSet:         imps.All,
 			OutFolder:         t.OutFolder,
 			NoGeneratedHeader: t.NoGeneratedHeader,
 			PkgName:           t.PkgName,
-			Data:              schema,
+			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
 			IsTest:            false,
@@ -113,11 +115,11 @@ func (t *Task) Run(schema *core.Schema) error {
 		if !t.NoTests {
 			if err := templates.Render(templates.Options{
 				Filename:          fname,
-				ImportSet:         t.Imports.Test,
+				ImportSet:         imps.Test,
 				OutFolder:         t.OutFolder,
 				NoGeneratedHeader: t.NoGeneratedHeader,
 				PkgName:           t.PkgName,
-				Data:              schema,
+				Data:              simmer,
 				Templates:         tpls,
 				TemplateFuncs:     tplsFuncs,
 				IsTest:            true,

@@ -43,7 +43,7 @@ func (m *Models) Name() string {
 	return "models"
 }
 
-func (m *Models) Run(schema *core.Schema) error {
+func (m *Models) Run(simmer *core.Simmer) error {
 
 	if err := m.Init(defaultModelOptions); err != nil {
 		return errors.Wrap(err, "failed to initialize model options")
@@ -60,13 +60,13 @@ func (m *Models) Run(schema *core.Schema) error {
 	tplsFuncs.Append(data.DataFuncs)
 
 	if !m.NoDriverTemplates {
-		driverTpls, err := schema.Data.Driver.Templates()
+		driverTpls, err := simmer.Data.Driver.Templates()
 		if err != nil {
 			return errors.Wrap(err, "failed to retrieve driver templates")
 		}
 		tpls.AppendBase64Templates(driverTpls)
 
-		driverImports, err := schema.Data.Driver.Imports()
+		driverImports, err := simmer.Data.Driver.Imports()
 		if err != nil {
 			return errors.Wrap(err, "failed to retrieve driver imports")
 		}
@@ -102,7 +102,7 @@ func (m *Models) Run(schema *core.Schema) error {
 		}
 		ignoreTags[v] = struct{}{}
 	}
-	schema.Options = options{
+	simmer.Options = options{
 		Options:           m.Options,
 		TagIgnore:         ignoreTags,
 		RelationTag:       "-",
@@ -124,7 +124,7 @@ func (m *Models) Run(schema *core.Schema) error {
 		OutFolder:         m.OutFolder,
 		NoGeneratedHeader: m.NoGeneratedHeader,
 		PkgName:           m.PkgName,
-		Data:              schema,
+		Data:              simmer,
 		Templates:         tpls,
 		TemplateFuncs:     tplsFuncs,
 		IsSingleton:       true,
@@ -139,7 +139,7 @@ func (m *Models) Run(schema *core.Schema) error {
 			OutFolder:         m.OutFolder,
 			NoGeneratedHeader: m.NoGeneratedHeader,
 			PkgName:           m.PkgName,
-			Data:              schema,
+			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
 			IsSingleton:       true,
@@ -149,12 +149,12 @@ func (m *Models) Run(schema *core.Schema) error {
 		}
 	}
 
-	for _, model := range schema.Models() {
+	for _, model := range simmer.Models() {
 		if model.Table.IsJoinTable {
 			continue
 		}
 
-		schema.Model = model
+		simmer.Model = model
 		fname := model.Name
 		if m.PluralFileNames {
 			fname = strmangle.Plural(fname)
@@ -178,7 +178,7 @@ func (m *Models) Run(schema *core.Schema) error {
 			OutFolder:         m.OutFolder,
 			NoGeneratedHeader: m.NoGeneratedHeader,
 			PkgName:           m.PkgName,
-			Data:              schema,
+			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
 			IsTest:            false,
@@ -193,7 +193,7 @@ func (m *Models) Run(schema *core.Schema) error {
 				OutFolder:         m.OutFolder,
 				NoGeneratedHeader: m.NoGeneratedHeader,
 				PkgName:           m.PkgName,
-				Data:              schema,
+				Data:              simmer,
 				Templates:         tpls,
 				TemplateFuncs:     tplsFuncs,
 				IsTest:            true,

@@ -1,0 +1,29 @@
+
+extend type Query {
+    account(id: ID!): Account
+    accounts: [Account]
+}
+
+extend type Mutation {
+    createAccount(input: AccountInput!): AccountPayload!
+    updateAccount(id: ID!, req: AccountInput!): AccountPayload!
+}
+
+type Account{
+    id: ID!
+    createdAt: Time!
+    updatedAt: Time!
+    email: String
+    owner: User
+}
+
+type AccountPayload{
+    success: Boolean!
+    message: String!
+    account: Account
+}
+
+input AccountInput{
+    email: String!
+    ownerID: String!
+}

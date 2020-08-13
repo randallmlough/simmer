@@ -241,7 +241,7 @@ func TestMergeSet(t *testing.T) {
 		ThirdParty: List{"github.com/randallmlough/simmer"},
 	}
 
-	c := mergeSet(a, b)
+	c := MergeSet(a, b)
 
 	if c.Standard[0] != "fmt" && c.Standard[1] != "os" {
 		t.Errorf("Wanted: fmt, os got: %#v", c.Standard)

@@ -16,7 +16,7 @@ var (
 
 type Task interface {
 	Name() string
-	Run(schema *Schema) error
+	Run(schema *Simmer) error
 }
 
 func Runner(config *Config, tasks ...Task) error {
