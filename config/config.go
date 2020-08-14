@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/randallmlough/simmer/core"
+	"github.com/randallmlough/simmer/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -29,6 +30,12 @@ func LoadConfig(pathToConfigFile string) (*core.Config, error) {
 			fmt.Sprintf(noEditDisclaimerFmt, " "+config.Version+" "),
 		)
 	}
+
+	importPath, err := utils.RootImportPath()
+	if err != nil {
+		return nil, err
+	}
+	config.RootImportPath = importPath
 	return config, nil
 }
 

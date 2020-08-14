@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/randallmlough/simmer/data"
 	"github.com/randallmlough/simmer/schema"
 	"github.com/volatiletech/strmangle"
@@ -62,6 +63,16 @@ type Simmer struct {
 	Model   *Model
 	models  map[string]*Model
 	Options interface{}
+}
+
+func (s *Simmer) Init(options *Options) error {
+
+	if err := options.validate(); err != nil {
+		return errors.Wrap(err, "options failed validation")
+	}
+
+	s.Options = options
+	return nil
 }
 
 func (s *Simmer) Models() []*Model {

@@ -30,6 +30,7 @@ var (
 	// allocating more memory than is needed. This will later be a problem for
 	// concurrency, address it then.
 	templateByteBuffer = &bytes.Buffer{}
+	set                = &importers.Set{}
 
 	rgxRemoveNumberedPrefix = regexp.MustCompile(`^[0-9]+_`)
 	rgxSyntaxError          = regexp.MustCompile(`(\d+):\d+: `)
@@ -93,10 +94,6 @@ func executeTemplates(e Options) error {
 		return errors.Wrap(err, "failed to initialize output folders")
 	}
 
-	set := &importers.Set{}
-	e.TemplateFuncs.AppendFunc("reserveImport", reserveImport(set, ""))
-	e.TemplateFuncs.AppendFunc("reserveThirdParty", reserveImport(set, "thirdParty"))
-
 	templates, err := ParseTemplates(e.Templates, e.IsTest, e.TemplateFuncs)
 	if err != nil {
 		return err
@@ -125,6 +122,7 @@ func executeTemplates(e Options) error {
 					}
 					writePackageName(out, pkgName)
 					imports := importers.MergeSet(e.ImportSet, *set)
+					set.Reset()
 					writeImports(out, imports)
 				}
 
@@ -153,9 +151,6 @@ func executeSingletonTemplates(e Options) error {
 	if err := initOutFolders(e.Templates, e.OutFolder, e.Wipe); err != nil {
 		return errors.Wrap(err, "failed to initialize output folders")
 	}
-	set := &importers.Set{}
-	e.TemplateFuncs.AppendFunc("reserveImport", reserveImport(set, ""))
-	e.TemplateFuncs.AppendFunc("reserveThirdParty", reserveImport(set, "thirdParty"))
 
 	templates, err := ParseTemplates(e.Templates, e.IsTest, e.TemplateFuncs)
 	if err != nil {

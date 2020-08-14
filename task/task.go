@@ -6,6 +6,7 @@ import (
 	"github.com/randallmlough/simmer/data"
 	"github.com/randallmlough/simmer/templates"
 	"github.com/volatiletech/strmangle"
+	"path/filepath"
 )
 
 func NewTasks(tasks map[string]*core.Options) (core.Tasks, error) {
@@ -45,12 +46,14 @@ func (t *Task) Name() string {
 
 func (t *Task) Run(simmer *core.Simmer) error {
 
-	if err := t.Init(nil); err != nil {
-		return errors.Wrap(err, "failed to initialize options")
+	opts := core.MergeOptions(defaultTaskOptions(simmer.Config.RootImportPath), *t.Options)
+	if err := simmer.Init(&opts); err != nil {
+		return errors.Wrap(err, "failed to initialize model options")
 	}
-	t.Imports = t.ConfigureImports(nil)
 
-	tpls, err := templates.LoadTemplates(t.TemplateDirs, t.Name())
+	opts.Imports = t.ConfigureImports(nil)
+
+	tpls, err := templates.LoadTemplates(opts.TemplateDirs, t.Name())
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize templates")
 	}
@@ -59,10 +62,10 @@ func (t *Task) Run(simmer *core.Simmer) error {
 	tplsFuncs.Append(data.DataFuncs)
 
 	if err := templates.Render(templates.Options{
-		ImportNamedSet:    t.Imports.Singleton,
-		OutFolder:         t.OutFolder,
-		NoGeneratedHeader: t.NoGeneratedHeader,
-		PkgName:           t.PkgName,
+		ImportNamedSet:    opts.Imports.Singleton,
+		OutFolder:         opts.OutFolder,
+		NoGeneratedHeader: opts.NoGeneratedHeader,
+		PkgName:           opts.PkgName,
 		Data:              simmer,
 		Templates:         tpls,
 		TemplateFuncs:     tplsFuncs,
@@ -74,10 +77,10 @@ func (t *Task) Run(simmer *core.Simmer) error {
 
 	if !t.NoTests {
 		if err := templates.Render(templates.Options{
-			ImportNamedSet:    t.Imports.TestSingleton,
-			OutFolder:         t.OutFolder,
-			NoGeneratedHeader: t.NoGeneratedHeader,
-			PkgName:           t.PkgName,
+			ImportNamedSet:    opts.Imports.TestSingleton,
+			OutFolder:         opts.OutFolder,
+			NoGeneratedHeader: opts.NoGeneratedHeader,
+			PkgName:           opts.PkgName,
 			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
@@ -92,18 +95,18 @@ func (t *Task) Run(simmer *core.Simmer) error {
 
 		simmer.Model = model
 		fname := model.Name
-		if t.PluralFileNames {
+		if opts.PluralFileNames {
 			fname = strmangle.Plural(fname)
 		}
 
-		imps := t.Imports
+		imps := opts.Imports
 
 		if err := templates.Render(templates.Options{
 			Filename:          fname,
 			ImportSet:         imps.All,
-			OutFolder:         t.OutFolder,
-			NoGeneratedHeader: t.NoGeneratedHeader,
-			PkgName:           t.PkgName,
+			OutFolder:         opts.OutFolder,
+			NoGeneratedHeader: opts.NoGeneratedHeader,
+			PkgName:           opts.PkgName,
 			Data:              simmer,
 			Templates:         tpls,
 			TemplateFuncs:     tplsFuncs,
@@ -112,13 +115,13 @@ func (t *Task) Run(simmer *core.Simmer) error {
 			return err
 		}
 
-		if !t.NoTests {
+		if !opts.NoTests {
 			if err := templates.Render(templates.Options{
 				Filename:          fname,
 				ImportSet:         imps.Test,
-				OutFolder:         t.OutFolder,
-				NoGeneratedHeader: t.NoGeneratedHeader,
-				PkgName:           t.PkgName,
+				OutFolder:         opts.OutFolder,
+				NoGeneratedHeader: opts.NoGeneratedHeader,
+				PkgName:           opts.PkgName,
 				Data:              simmer,
 				Templates:         tpls,
 				TemplateFuncs:     tplsFuncs,
@@ -130,4 +133,21 @@ func (t *Task) Run(simmer *core.Simmer) error {
 	}
 
 	return nil
+}
+func defaultTaskOptions(rootImportPath string) core.Options {
+	return core.Options{
+		Replacements: core.Replacements{
+			Type: make(map[string]core.Replacement),
+			Package: map[string]core.Replacement{
+				"data": {
+					Value:  "models",
+					Import: filepath.Join(rootImportPath, "models"),
+				},
+				"schema": {
+					Value:  "domain",
+					Import: filepath.Join(rootImportPath, "domain"),
+				},
+			},
+		},
+	}
 }

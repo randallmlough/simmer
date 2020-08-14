@@ -123,6 +123,8 @@ func SetFromInterface(intf interface{}) (Set, error) {
 // using forward slash (/).
 type Map map[string]Set
 
+type Package map[string]string
+
 // MapFromInterface creates a Map from a theoretical map[string]interface{}
 // or []map[string]interface{}
 // This is to load from a loosely defined configuration file.

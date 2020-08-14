@@ -7,10 +7,7 @@ import (
 type Config struct {
 	DBConfig   *database.Config `json:"database" yaml:"database"`
 	Migrations string
-
-	//Models     *Options            `json:"models,omitempty" yaml:"models,omitempty"`
-	//Repository *Options            `json:"repository,omitempty" yaml:"repository,omitempty"`
-	Tasks map[string]*Options `json:"tasks" yaml:"tasks"`
+	Tasks      map[string]*Options `json:"tasks" yaml:"tasks"`
 
 	Debug bool `toml:"debug,omitempty" json:"debug,omitempty" yaml:"debug,omitempty"`
 
@@ -18,7 +15,8 @@ type Config struct {
 	Verbose          bool   `json:"verbose" yaml:"verbose"`
 	Version          string `toml:"-" json:"-" yaml:"-"`
 
-	Schema StringList `yaml:"schema,omitempty"`
+	Schema         StringList `yaml:"schema,omitempty"`
+	RootImportPath string     `json:"root_import_path" yaml:"root_import_path"`
 }
 
 type StringList []string

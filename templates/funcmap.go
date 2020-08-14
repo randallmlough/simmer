@@ -110,9 +110,11 @@ var TemplateFunctions = TemplateFuncs{
 	"getTable":               database.GetTable,
 
 	// Go specific
-	"go":          ToGo,
-	"goPrivate":   ToGoPrivate,
-	"prefixLines": prefixLines,
+	"go":                ToGo,
+	"goPrivate":         ToGoPrivate,
+	"prefixLines":       prefixLines,
+	"reserveImport":     reserveImport(set, ""),
+	"reserveThirdParty": reserveImport(set, "thirdParty"),
 	//"ref":       ref,
 
 	// models

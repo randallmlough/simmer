@@ -56,40 +56,24 @@ type Options struct {
 
 	TemplateDirs []string             `json:"template_dirs" yaml:"template_dirs"`
 	Imports      importers.Collection `json:"imports" yaml:"imports"`
-	Replacements []string             `json:"replacements,omitempty" yaml:"replacements,omitempty"`
+	Replacements Replacements         `json:"replacements,omitempty" yaml:"replacements,omitempty"`
 }
 
-func (o *Options) Init(defaultOptions func() Options) error {
-	if defaultOptions == nil {
-		if err := o.validate(); err != nil {
-			return errors.Wrap(err, "options failed validation")
-		}
-		return nil
-	}
-	options := mergeOptions(*o, defaultOptions())
-	if err := options.validate(); err != nil {
-		return errors.Wrap(err, "options failed validation")
-	}
-	*o = options
-
-	return nil
-}
-
-func mergeOptions(src, defaultOptions Options) Options {
+func MergeOptions(defaultOptions, newOptions Options) Options {
 	return Options{
-		Name:              stringFallback(src.Name, defaultOptions.Name),
-		Debug:             boolFallback(src.Debug, defaultOptions.Debug),
-		OutFolder:         stringFallback(src.OutFolder, defaultOptions.OutFolder),
-		PkgName:           stringFallback(src.PkgName, defaultOptions.PkgName),
-		PluralFileNames:   boolFallback(src.PluralFileNames, defaultOptions.PluralFileNames),
-		NoTests:           boolFallback(src.NoTests, defaultOptions.NoTests),
-		Tags:              sliceFallback(src.Tags, defaultOptions.Tags),
-		Replacements:      sliceFallback(src.Replacements, defaultOptions.Replacements),
-		Wipe:              boolFallback(src.Wipe, defaultOptions.Wipe),
-		NoGeneratedHeader: boolFallback(src.NoGeneratedHeader, defaultOptions.NoGeneratedHeader),
-		TemplateDirs:      sliceFallback(src.TemplateDirs, defaultOptions.TemplateDirs),
-		StructTagCasing:   stringFallback(src.StructTagCasing, defaultOptions.StructTagCasing),
-		TagIgnore:         sliceFallback(src.TagIgnore, defaultOptions.TagIgnore),
+		Name:              stringFallback(newOptions.Name, defaultOptions.Name),
+		Debug:             boolFallback(newOptions.Debug, defaultOptions.Debug),
+		OutFolder:         stringFallback(newOptions.OutFolder, defaultOptions.OutFolder),
+		PkgName:           stringFallback(newOptions.PkgName, defaultOptions.PkgName),
+		PluralFileNames:   boolFallback(newOptions.PluralFileNames, defaultOptions.PluralFileNames),
+		NoTests:           boolFallback(newOptions.NoTests, defaultOptions.NoTests),
+		Tags:              sliceFallback(newOptions.Tags, defaultOptions.Tags),
+		Wipe:              boolFallback(newOptions.Wipe, defaultOptions.Wipe),
+		NoGeneratedHeader: boolFallback(newOptions.NoGeneratedHeader, defaultOptions.NoGeneratedHeader),
+		TemplateDirs:      sliceFallback(newOptions.TemplateDirs, defaultOptions.TemplateDirs),
+		StructTagCasing:   stringFallback(newOptions.StructTagCasing, defaultOptions.StructTagCasing),
+		TagIgnore:         sliceFallback(newOptions.TagIgnore, defaultOptions.TagIgnore),
+		Replacements:      MergeReplacements(defaultOptions.Replacements, newOptions.Replacements),
 	}
 }
 
@@ -123,6 +107,13 @@ func (o *Options) initTags(tags []string) error {
 	}
 
 	return nil
+}
+
+func (o *Options) Package(name string) Replacement {
+	if r, ok := o.Replacements.Package[name]; ok {
+		return r
+	}
+	return Replacement{Value: name}
 }
 
 func stringFallback(value, fallbackValue string) string {
@@ -208,4 +199,31 @@ func (tt *Tasks) AddTask(task Task, override bool) error {
 
 func (tt *Tasks) Append(task Task) {
 	*tt = append(*tt, task)
+}
+
+type Replacements struct {
+	Type    map[string]Replacement `json:"type" yaml:"type"`
+	Package map[string]Replacement `json:"package" yaml:"package"`
+}
+
+func MergeReplacements(a, b Replacements) Replacements {
+	// merge type
+	c := a
+	for key, replacement := range b.Type {
+		c.Type[key] = replacement
+	}
+	// merge package
+	for key, replacement := range b.Package {
+		c.Type[key] = replacement
+	}
+	return c
+}
+
+type Replacement struct {
+	Value  string `json:"value" yaml:"value"`
+	Import string `json:"import" yaml:"import"`
+}
+
+func (r Replacement) String() string {
+	return r.Value
 }

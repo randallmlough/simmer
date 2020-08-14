@@ -45,7 +45,8 @@ func (m *Models) Name() string {
 
 func (m *Models) Run(simmer *core.Simmer) error {
 
-	if err := m.Init(defaultModelOptions); err != nil {
+	opts := core.MergeOptions(*m.Options, defaultModelOptions())
+	if err := simmer.Init(&opts); err != nil {
 		return errors.Wrap(err, "failed to initialize model options")
 	}
 
@@ -212,7 +213,6 @@ func defaultModelOptions() core.Options {
 		PluralFileNames:   false,
 		NoTests:           false,
 		Tags:              nil,
-		Replacements:      nil,
 		Wipe:              true,
 		NoGeneratedHeader: true,
 		StructTagCasing:   "snake",
