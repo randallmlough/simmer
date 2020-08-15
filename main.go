@@ -1,10 +1,8 @@
 package main
 
 import (
-	"github.com/randallmlough/simmer/config"
 	"github.com/randallmlough/simmer/core"
 	"github.com/randallmlough/simmer/task"
-	"github.com/randallmlough/simmer/utils"
 	"log"
 	"os"
 	"path/filepath"
@@ -40,7 +38,15 @@ func createConfigPaths() []string {
 }
 
 func configExists(path string) bool {
-	return utils.FileExists(path)
+	return fileExists(path)
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func main() {
@@ -52,7 +58,7 @@ func main() {
 		}
 	}
 
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := core.LoadConfig(configPath)
 	if err != nil {
 		log.Fatal(err)
 		return
