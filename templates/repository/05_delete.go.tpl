@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $data := .Data -}}
 {{- $model := .Model -}}
 {{- $options := .Options -}}
@@ -12,12 +13,12 @@ func (db *{{$modelNameUppercase}}) Delete{{$modelNameUppercase}}(ctx context.Con
 		return errors.Wrap(err, "{{$modelName}} validation failed")
 	}
 
-	{{- if and $options.AddSoftDeletes $canSoftDelete}}
+	{{- if and $data.AddSoftDeletes $canSoftDelete}}
 	o := initOptions(opts...)
 	{{- end}}
-	if _, err := m.Delete(ctx, db.getExecutor(ctx){{if and $options.AddSoftDeletes $canSoftDelete}}, o.HardDelete{{end}}); err != nil {
+	if _, err := m.Delete(ctx, db.getExecutor(ctx){{if and $data.AddSoftDeletes $canSoftDelete}}, o.HardDelete{{end}}); err != nil {
 		return errors.Wrapf(err, "failed to delete {{$modelName}} with id: %v", m.ID)
 	}
 	return nil
 }
-
+{{end}}

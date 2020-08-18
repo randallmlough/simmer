@@ -19,14 +19,14 @@ func test{{$alias.UpPlural}}Update(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := {{$alias.UpPlural}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := {{$alias.UpPlural}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,12 +39,12 @@ func test{{$alias.UpPlural}}Update(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if $options.NoRowsAffected -}}
-	if err = o.Update({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	{{if $data.NoRowsAffected -}}
+	if err = o.Update({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 	{{else -}}
-	if rowsAff, err := o.Update({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if rowsAff, err := o.Update({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only affect one row but affected", rowsAff)
@@ -66,14 +66,14 @@ func test{{$alias.UpPlural}}SliceUpdateAll(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := {{$alias.UpPlural}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := {{$alias.UpPlural}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -118,12 +118,12 @@ func test{{$alias.UpPlural}}SliceUpdateAll(t *testing.T) {
 	}
 
 	slice := {{$alias.UpSingular}}Slice{{"{"}}o{{"}"}}
-	{{if $options.NoRowsAffected -}}
-	if err = slice.UpdateAll({{if not $options.NoContext}}ctx, {{end -}} tx, updateMap); err != nil {
+	{{if $data.NoRowsAffected -}}
+	if err = slice.UpdateAll({{if not $data.NoContext}}ctx, {{end -}} tx, updateMap); err != nil {
 		t.Error(err)
 	}
 	{{else -}}
-	if rowsAff, err := slice.UpdateAll({{if not $options.NoContext}}ctx, {{end -}} tx, updateMap); err != nil {
+	if rowsAff, err := slice.UpdateAll({{if not $data.NoContext}}ctx, {{end -}} tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("wanted one record updated but got", rowsAff)

@@ -5,8 +5,8 @@
 {{- $schemaTable := $model.Table.Name | $data.SchemaTable}}
 {{if $options.AddGlobal -}}
 // InsertG a single record. See Insert for whitelist behavior description.
-func (o *{{$alias.UpSingular}}) InsertG({{if not $options.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) error {
-	return o.Insert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns)
+func (o *{{$alias.UpSingular}}) InsertG({{if not $data.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) error {
+	return o.Insert({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns)
 }
 
 {{end -}}
@@ -14,8 +14,8 @@ func (o *{{$alias.UpSingular}}) InsertG({{if not $options.NoContext}}ctx context
 {{if $options.AddPanic -}}
 // InsertP a single record using an executor, and panics on error. See Insert
 // for whitelist behavior description.
-func (o *{{$alias.UpSingular}}) InsertP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) {
-	if err := o.Insert({{if not $options.NoContext}}ctx, {{end -}} exec, columns); err != nil {
+func (o *{{$alias.UpSingular}}) InsertP({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) {
+	if err := o.Insert({{if not $data.NoContext}}ctx, {{end -}} exec, columns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -25,8 +25,8 @@ func (o *{{$alias.UpSingular}}) InsertP({{if $options.NoContext}}exec simmer.Exe
 {{if and $options.AddGlobal $options.AddPanic -}}
 // InsertGP a single record, and panics on error. See Insert for whitelist
 // behavior description.
-func (o *{{$alias.UpSingular}}) InsertGP({{if not $options.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) {
-	if err := o.Insert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns); err != nil {
+func (o *{{$alias.UpSingular}}) InsertGP({{if not $data.NoContext}}ctx context.Context, {{end -}} columns simmer.Columns) {
+	if err := o.Insert({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, columns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -35,7 +35,7 @@ func (o *{{$alias.UpSingular}}) InsertGP({{if not $options.NoContext}}ctx contex
 
 // Insert a single record using an executor.
 // See simmer.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) error {
+func (o *{{$alias.UpSingular}}) Insert({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, columns simmer.Columns) error {
 	if o == nil {
 		return errors.New("{{$options.PkgName}}: no {{$model.Table.Name}} provided for insertion")
 	}
@@ -43,8 +43,8 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	var err error
 	{{- template "timestamp_insert_helper" . }}
 
-	{{if not $options.NoHooks -}}
-	if err := o.doBeforeInsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+	{{if not $data.NoHooks -}}
+	if err := o.doBeforeInsertHooks({{if not $data.NoContext}}ctx, {{end -}} exec); err != nil {
 		return err
 	}
 	{{- end}}
@@ -102,7 +102,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	value := reflect.Indirect(reflect.ValueOf(o))
 	vals := queries.ValuesFromMapping(value, cache.valueMapping)
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, cache.query)
 		fmt.Fprintln(simmer.DebugWriter, vals)
@@ -118,13 +118,13 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	{{if $data.Dialect.UseLastInsertID -}}
 	{{- $canLastInsertID := $model.Table.CanLastInsertID -}}
 	{{if $canLastInsertID -}}
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 	result, err := exec.Exec(cache.query, vals...)
 		{{else -}}
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 		{{end -}}
 	{{else -}}
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 	_, err = exec.Exec(cache.query, vals...)
 		{{else -}}
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
@@ -164,7 +164,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 		{{end -}}
 	}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, cache.retQuery)
 		fmt.Fprintln(simmer.DebugWriter, identifierCols...)
@@ -177,7 +177,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	}
 	{{end -}}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	{{else -}}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
@@ -187,13 +187,13 @@ func (o *{{$alias.UpSingular}}) Insert({{if $options.NoContext}}exec simmer.Exec
 	}
 	{{else}}
 	if len(cache.retMapping) != 0 {
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		err = exec.QueryRow(cache.query, vals...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 		{{else -}}
 		err = exec.QueryRowContext(ctx, cache.query, vals...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 		{{end -}}
 	} else {
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		_, err = exec.Exec(cache.query, vals...)
 		{{else -}}
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
@@ -214,8 +214,8 @@ CacheNoHooks:
 		{{$alias.DownSingular}}InsertCacheMut.Unlock()
 	}
 
-	{{if not $options.NoHooks -}}
-	return o.doAfterInsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec)
+	{{if not $data.NoHooks -}}
+	return o.doAfterInsertHooks({{if not $data.NoContext}}ctx, {{end -}} exec)
 	{{- else -}}
 	return nil
 	{{- end}}

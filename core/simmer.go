@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/randallmlough/simmer/data"
+	"github.com/randallmlough/simmer/importers"
 	"github.com/randallmlough/simmer/schema"
 	"github.com/volatiletech/strmangle"
 	"path/filepath"
@@ -13,22 +14,23 @@ import (
 
 // New creates a new state based off of the config
 func New(cfg *Config) (*Simmer, error) {
+	// main import declaration
+	// tasks/options imports will merge into this since those are dynamic imports per task
+	imps := new(importers.Set)
 	s := &Simmer{
-		Config: cfg,
-		models: make(map[string]*Model),
+		Config:  cfg,
+		models:  make(map[string]*Model),
+		Imports: imps,
 	}
 
-	models, err := data.New(
-		data.Options{
-			DBConfig: cfg.DBConfig,
-		},
-	)
+	cfg.Models.DBConfig = cfg.DBConfig
+	models, err := data.New(cfg.Models)
 	if err != nil {
 		return nil, err
 	}
 	s.Data = models
 
-	schema, err := schema.New(cfg.Schema)
+	schema, err := schema.New(cfg.Schema, imps)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +65,7 @@ type Simmer struct {
 	Model   *Model
 	models  map[string]*Model
 	Options interface{}
+	Imports *importers.Set
 }
 
 func (s *Simmer) Init(options *Options) error {
@@ -70,7 +73,6 @@ func (s *Simmer) Init(options *Options) error {
 	if err := options.validate(); err != nil {
 		return errors.Wrap(err, "options failed validation")
 	}
-
 	s.Options = options
 	return nil
 }
@@ -78,6 +80,7 @@ func (s *Simmer) Init(options *Options) error {
 func (s *Simmer) Models() []*Model {
 	models := make([]*Model, 0, len(s.models))
 	for _, model := range s.models {
+		model.imports = s.Imports
 		models = append(models, model)
 	}
 	return models

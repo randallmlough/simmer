@@ -14,7 +14,7 @@
 		{{- $canSoftDelete := (getTable $data.Tables $rel.ForeignTable).CanSoftDelete }}
 // Load{{$relAlias.Local}} allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-1 relationship.
-func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $options.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
+func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $data.NoContext}}e simmer.Executor{{else}}ctx context.Context, e simmer.ContextExecutor{{end}}, singular bool, {{$arg}} interface{}, mods queries.Applicator) error {
 	var slice []*{{$ltable.UpSingular}}
 	var object *{{$ltable.UpSingular}}
 
@@ -58,7 +58,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $options.NoContext
 	query := NewQuery(
 	    queries.From(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}`),
         queries.WhereIn(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.{{.ForeignColumn}} in ?`, args...),
-	    {{if and $options.AddSoftDeletes $canSoftDelete -}}
+	    {{if and $data.AddSoftDeletes $canSoftDelete -}}
 	    queries.WhereIsNull(`{{if $data.Dialect.UseSchema}}{{$data.Schema}}.{{end}}{{.ForeignTable}}.deleted_at`),
 	    {{- end}}
     )
@@ -66,7 +66,7 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $options.NoContext
 		mods.Apply(query)
 	}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	results, err := query.Query(e)
 	{{else -}}
 	results, err := query.QueryContext(ctx, e)
@@ -87,10 +87,10 @@ func ({{$ltable.DownSingular}}L) Load{{$relAlias.Local}}({{if $options.NoContext
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for {{.ForeignTable}}")
 	}
 
-	{{if not $options.NoHooks -}}
+	{{if not $data.NoHooks -}}
 	if len({{$ltable.DownSingular}}AfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks({{if $options.NoContext}}e{{else}}ctx, e{{end}}); err != nil {
+			if err := obj.doAfterSelectHooks({{if $data.NoContext}}e{{else}}ctx, e{{end}}); err != nil {
 				return err
 			}
 		}

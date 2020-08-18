@@ -113,17 +113,17 @@ var TemplateFunctions = TemplateFuncs{
 	"go":                ToGo,
 	"goPrivate":         ToGoPrivate,
 	"prefixLines":       prefixLines,
-	"reserveImport":     reserveImport(set, ""),
-	"reserveThirdParty": reserveImport(set, "thirdParty"),
+	"addImport":         addImport(set, ""),
+	"reserveThirdParty": addImport(set, "thirdParty"),
 	//"ref":       ref,
 
 	// models
 	"modelTypeAsText": getModelTypeAsText,
 }
 
-type reserveImportFunc func(path string, aliases ...string) string
+type addImportFunc func(path string, aliases ...string) string
 
-func reserveImport(set *importers.Set, typ string) reserveImportFunc {
+func addImport(set *importers.Set, typ string) addImportFunc {
 	return func(path string, aliases ...string) string {
 		if path == "" {
 			return ""
@@ -218,7 +218,7 @@ func isBuiltin(typ string) bool {
 	return false
 }
 
-//func ref(p types.Type) string {
+//func ref(p types.typ) string {
 //	return CurrentImports.LookupType(p)
 //}
 func getModelTypeAsText(boilType string) string {

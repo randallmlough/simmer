@@ -19,8 +19,8 @@
 // Appends related to o.R.{{$relAlias.Local}}.
 // Sets related.R.{{$relAlias.Foreign}} appropriately.
 // Uses the global database handle.
-func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}G({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) error {
-	return o.Add{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...)
+func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}G({{if not $data.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) error {
+	return o.Add{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...)
 }
 
 {{end -}}
@@ -31,8 +31,8 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}G({{if not $options.NoCon
 // Appends related to o.R.{{$relAlias.Local}}.
 // Sets related.R.{{$relAlias.Foreign}} appropriately.
 // Panics on error.
-func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}P({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) {
-	if err := o.Add{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} exec, insert, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}P({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) {
+	if err := o.Add{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} exec, insert, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -45,8 +45,8 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}P({{if $options.NoContext
 // Appends related to o.R.{{$relAlias.Local}}.
 // Sets related.R.{{$relAlias.Foreign}} appropriately.
 // Uses the global database handle and panics on error.
-func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}GP({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) {
-	if err := o.Add{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}GP({{if not $data.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) {
+	if err := o.Add{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -57,7 +57,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}GP({{if not $options.NoCo
 // of the {{$table.Name | singular}}, optionally inserting them as new records.
 // Appends related to o.R.{{$relAlias.Local}}.
 // Sets related.R.{{$relAlias.Foreign}} appropriately.
-func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) error {
+func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -69,7 +69,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 				{{end -}}
 			{{end -}}
 
-			if err = rel.Insert({{if not $options.NoContext}}ctx, {{end -}} exec, simmer.Infer()); err != nil {
+			if err = rel.Insert({{if not $data.NoContext}}ctx, {{end -}} exec, simmer.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
 		}{{if not .ToJoinTable}} else {
@@ -80,7 +80,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 			)
 			values := []interface{}{o.{{$col}}, rel.{{$foreignPKeyCols | stringMap (aliasCols $ftable) | join ", rel."}}{{"}"}}
 
-			{{if $options.NoContext -}}
+			{{if $data.NoContext -}}
 			if simmer.DebugMode {
 				fmt.Fprintln(simmer.DebugWriter, updateQuery)
 				fmt.Fprintln(simmer.DebugWriter, values)
@@ -93,7 +93,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 			}
 			{{end -}}
 
-			{{if $options.NoContext -}}
+			{{if $data.NoContext -}}
 			if _, err = exec.Exec(updateQuery, values...); err != nil {
 			{{else -}}
 			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
@@ -114,7 +114,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 		query := "insert into {{.JoinTable | $data.SchemaTable}} ({{.JoinLocalColumn | $data.Quotes}}, {{.JoinForeignColumn | $.Quotes}}) values {{if $.Dialect.UseIndexPlaceholders}}($1, $2){{else}}(?, ?){{end}}"
 		values := []interface{}{{"{"}}o.{{$col}}, rel.{{$fcol}}}
 
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		if simmer.DebugMode {
 			fmt.Fprintln(simmer.DebugWriter, query)
 			fmt.Fprintln(simmer.DebugWriter, values)
@@ -127,7 +127,7 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 		}
 		{{end -}}
 
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		_, err = exec.Exec(query, values...)
 		{{else -}}
 		_, err = exec.ExecContext(ctx, query, values...)
@@ -180,8 +180,8 @@ func (o *{{$ltable.UpSingular}}) Add{{$relAlias.Local}}({{if $options.NoContext}
 // Replaces o.R.{{$relAlias.Local}} with related.
 // Sets related.R.{{$relAlias.Foreign}}'s {{$relAlias.Local}} accordingly.
 // Uses the global database handle.
-func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}G({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) error {
-	return o.Set{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...)
+func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}G({{if not $data.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) error {
+	return o.Set{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...)
 }
 
 {{end -}}
@@ -194,8 +194,8 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}G({{if not $options.NoCon
 // Replaces o.R.{{$relAlias.Local}} with related.
 // Sets related.R.{{$relAlias.Foreign}}'s {{$relAlias.Local}} accordingly.
 // Panics on error.
-func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}P({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) {
-	if err := o.Set{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} exec, insert, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}P({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) {
+	if err := o.Set{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} exec, insert, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -210,8 +210,8 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}P({{if $options.NoContext
 // Replaces o.R.{{$relAlias.Local}} with related.
 // Sets related.R.{{$relAlias.Foreign}}'s {{$relAlias.Local}} accordingly.
 // Uses the global database handle and panics on error.
-func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}GP({{if not $options.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) {
-	if err := o.Set{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}GP({{if not $data.NoContext}}ctx context.Context, {{end -}} insert bool, related ...*{{$ftable.UpSingular}}) {
+	if err := o.Set{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, insert, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -224,7 +224,7 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}GP({{if not $options.NoCo
 // Sets o.R.{{$relAlias.Foreign}}'s {{$relAlias.Local}} accordingly.
 // Replaces o.R.{{$relAlias.Local}} with related.
 // Sets related.R.{{$relAlias.Foreign}}'s {{$relAlias.Local}} accordingly.
-func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) error {
+func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, insert bool, related ...*{{$ftable.UpSingular}}) error {
 	{{if .ToJoinTable -}}
 	query := "delete from {{.JoinTable | $data.SchemaTable}} where {{.JoinLocalColumn | $data.Quotes}} = {{if $data.Dialect.UseIndexPlaceholders}}$1{{else}}?{{end}}"
 	values := []interface{}{{"{"}}o.{{$col}}}
@@ -232,7 +232,7 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $options.NoContext}
 	query := "update {{.ForeignTable | $data.SchemaTable}} set {{.ForeignColumn | $data.Quotes}} = null where {{.ForeignColumn | $data.Quotes}} = {{if $data.Dialect.UseIndexPlaceholders}}$1{{else}}?{{end}}"
 	values := []interface{}{{"{"}}o.{{$col}}}
 	{{end -}}
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, query)
 		fmt.Fprintln(simmer.DebugWriter, values)
@@ -245,7 +245,7 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $options.NoContext}
 	}
 	{{end -}}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	_, err := exec.Exec(query, values...)
 	{{else -}}
 	_, err := exec.ExecContext(ctx, query, values...)
@@ -274,7 +274,7 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $options.NoContext}
 	}
 	{{end -}}
 
-	return o.Add{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} exec, insert, related...)
+	return o.Add{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} exec, insert, related...)
 }
 
 {{if $options.AddGlobal -}}
@@ -282,8 +282,8 @@ func (o *{{$ltable.UpSingular}}) Set{{$relAlias.Local}}({{if $options.NoContext}
 // Removes related items from R.{{$relAlias.Local}} (uses pointer comparison, removal does not keep order)
 // Sets related.R.{{$relAlias.Foreign}}.
 // Uses the global database handle.
-func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}G({{if not $options.NoContext}}ctx context.Context, {{end -}} related ...*{{$ftable.UpSingular}}) error {
-	return o.Remove{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related...)
+func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}G({{if not $data.NoContext}}ctx context.Context, {{end -}} related ...*{{$ftable.UpSingular}}) error {
+	return o.Remove{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related...)
 }
 
 {{end -}}
@@ -293,8 +293,8 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}G({{if not $options.No
 // Removes related items from R.{{$relAlias.Local}} (uses pointer comparison, removal does not keep order)
 // Sets related.R.{{$relAlias.Foreign}}.
 // Panics on error.
-func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}P({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related ...*{{$ftable.UpSingular}}) {
-	if err := o.Remove{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} exec, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}P({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related ...*{{$ftable.UpSingular}}) {
+	if err := o.Remove{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} exec, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -306,8 +306,8 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}P({{if $options.NoCont
 // Removes related items from R.{{$relAlias.Local}} (uses pointer comparison, removal does not keep order)
 // Sets related.R.{{$relAlias.Foreign}}.
 // Uses the global database handle and panics on error.
-func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}GP({{if not $options.NoContext}}ctx context.Context, {{end -}} related ...*{{$ftable.UpSingular}}) {
-	if err := o.Remove{{$relAlias.Local}}({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related...); err != nil {
+func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}GP({{if not $data.NoContext}}ctx context.Context, {{end -}} related ...*{{$ftable.UpSingular}}) {
+	if err := o.Remove{{$relAlias.Local}}({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, related...); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -317,7 +317,7 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}GP({{if not $options.N
 // Remove{{$relAlias.Local}} relationships from objects passed in.
 // Removes related items from R.{{$relAlias.Local}} (uses pointer comparison, removal does not keep order)
 // Sets related.R.{{$relAlias.Foreign}}.
-func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related ...*{{$ftable.UpSingular}}) error {
+func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, related ...*{{$ftable.UpSingular}}) error {
 	var err error
 	{{if .ToJoinTable -}}
 	query := fmt.Sprintf(
@@ -329,7 +329,7 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}({{if $options.NoConte
 		values = append(values, rel.{{$fcol}})
 	}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, query)
 		fmt.Fprintln(simmer.DebugWriter, values)
@@ -342,7 +342,7 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}({{if $options.NoConte
 	}
 	{{end -}}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	_, err = exec.Exec(query, values...)
 	{{else -}}
 	_, err = exec.ExecContext(ctx, query, values...)
@@ -358,7 +358,7 @@ func (o *{{$ltable.UpSingular}}) Remove{{$relAlias.Local}}({{if $options.NoConte
 			rel.R.{{$relAlias.Foreign}} = nil
 		}
 		{{end -}}
-		if {{if not $options.NoRowsAffected}}_, {{end -}} err = rel.Update({{if not $options.NoContext}}ctx, {{end -}} exec, simmer.Whitelist("{{.ForeignColumn}}")); err != nil {
+		if {{if not $data.NoRowsAffected}}_, {{end -}} err = rel.Update({{if not $data.NoContext}}ctx, {{end -}} exec, simmer.Whitelist("{{.ForeignColumn}}")); err != nil {
 			return err
 		}
 	}

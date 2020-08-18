@@ -81,17 +81,17 @@ func (m *Models) Run(simmer *core.Simmer) error {
 
 	type options struct {
 		*core.Options
-		TagIgnore         map[string]struct{}
-		RelationTag       string
-		PkgName           string
-		OutputDirDepth    int
-		AddGlobal         bool
-		AddPanic          bool
-		AddSoftDeletes    bool
-		NoContext         bool
-		NoHooks           bool
-		NoAutoTimestamps  bool
-		NoRowsAffected    bool
+		TagIgnore      map[string]struct{}
+		RelationTag    string
+		PkgName        string
+		OutputDirDepth int
+		AddGlobal      bool
+		AddPanic       bool
+		//AddSoftDeletes    bool
+		//NoContext         bool
+		//NoHooks           bool
+		//NoAutoTimestamps  bool
+		//NoRowsAffected    bool
 		NoDriverTemplates bool
 		NoBackReferencing bool
 		DBTypes           templates.Once
@@ -104,17 +104,17 @@ func (m *Models) Run(simmer *core.Simmer) error {
 		ignoreTags[v] = struct{}{}
 	}
 	simmer.Options = options{
-		Options:           m.Options,
-		TagIgnore:         ignoreTags,
-		RelationTag:       "-",
-		OutputDirDepth:    core.OutputDirDepth(m.OutFolder),
-		AddGlobal:         false,
-		AddPanic:          false,
-		AddSoftDeletes:    true,
-		NoContext:         false,
-		NoHooks:           false,
-		NoAutoTimestamps:  false,
-		NoRowsAffected:    false,
+		Options:        m.Options,
+		TagIgnore:      ignoreTags,
+		RelationTag:    "-",
+		OutputDirDepth: core.OutputDirDepth(m.OutFolder),
+		AddGlobal:      false,
+		AddPanic:       false,
+		//AddSoftDeletes:    simmer.o,
+		//NoContext:         simmer.o,
+		//NoHooks:           simmer.o,
+		//NoAutoTimestamps:  simmer.o,
+		//NoRowsAffected:    simmer.o,
 		NoDriverTemplates: false,
 		NoBackReferencing: true,
 		DBTypes:           make(templates.Once),
@@ -151,7 +151,7 @@ func (m *Models) Run(simmer *core.Simmer) error {
 	}
 
 	for _, model := range simmer.Models() {
-		if model.Table.IsJoinTable {
+		if !model.HasModel() || model.Table.IsJoinTable {
 			continue
 		}
 
@@ -175,7 +175,7 @@ func (m *Models) Run(simmer *core.Simmer) error {
 
 		if err := templates.Render(templates.Options{
 			Filename:          fname,
-			ImportSet:         imps,
+			ImportSet:         &imps,
 			OutFolder:         m.OutFolder,
 			NoGeneratedHeader: m.NoGeneratedHeader,
 			PkgName:           m.PkgName,
@@ -190,7 +190,7 @@ func (m *Models) Run(simmer *core.Simmer) error {
 		if !m.NoTests {
 			if err := templates.Render(templates.Options{
 				Filename:          fname,
-				ImportSet:         m.Imports.Test,
+				ImportSet:         &m.Imports.Test,
 				OutFolder:         m.OutFolder,
 				NoGeneratedHeader: m.NoGeneratedHeader,
 				PkgName:           m.PkgName,

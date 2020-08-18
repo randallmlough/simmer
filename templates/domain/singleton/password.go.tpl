@@ -1,6 +1,6 @@
-{{- reserveImport "fmt" -}}
-{{- reserveImport "io" -}}
-{{- reserveImport "strconv" -}}
+{{- addImport "fmt" -}}
+{{- addImport "io" -}}
+{{- addImport "strconv" -}}
 
 {{- $schema := .Schema -}}
 {{- if $schema.Scalars.Scalar "Password"}}

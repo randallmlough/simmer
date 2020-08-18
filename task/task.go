@@ -47,11 +47,10 @@ func (t *Task) Name() string {
 func (t *Task) Run(simmer *core.Simmer) error {
 
 	opts := core.MergeOptions(defaultTaskOptions(simmer.Config.RootImportPath), *t.Options)
+	opts.Imports = t.ConfigureImports(nil)
 	if err := simmer.Init(&opts); err != nil {
 		return errors.Wrap(err, "failed to initialize model options")
 	}
-
-	opts.Imports = t.ConfigureImports(nil)
 
 	tpls, err := templates.LoadTemplates(opts.TemplateDirs, t.Name())
 	if err != nil {
@@ -92,18 +91,16 @@ func (t *Task) Run(simmer *core.Simmer) error {
 	}
 
 	for _, model := range simmer.Models() {
-
 		simmer.Model = model
 		fname := model.Name
 		if opts.PluralFileNames {
 			fname = strmangle.Plural(fname)
 		}
-
 		imps := opts.Imports
-
+		simmer.Imports.Merge(opts.Imports.All)
 		if err := templates.Render(templates.Options{
 			Filename:          fname,
-			ImportSet:         imps.All,
+			ImportSet:         simmer.Imports,
 			OutFolder:         opts.OutFolder,
 			NoGeneratedHeader: opts.NoGeneratedHeader,
 			PkgName:           opts.PkgName,
@@ -114,11 +111,12 @@ func (t *Task) Run(simmer *core.Simmer) error {
 		}); err != nil {
 			return err
 		}
+		simmer.Imports.Reset()
 
 		if !opts.NoTests {
 			if err := templates.Render(templates.Options{
 				Filename:          fname,
-				ImportSet:         imps.Test,
+				ImportSet:         &imps.Test,
 				OutFolder:         opts.OutFolder,
 				NoGeneratedHeader: opts.NoGeneratedHeader,
 				PkgName:           opts.PkgName,

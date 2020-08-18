@@ -1,4 +1,4 @@
-{{- reserveImport "strings" -}}
+{{- addImport "strings" -}}
 
 func GenerateID(prefix string) string {
 	id := rand.RandomString(12)

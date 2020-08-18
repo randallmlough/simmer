@@ -15,7 +15,7 @@ func TestParent(t *testing.T) {
   {{- end -}}
 }
 
-{{if .Options.AddSoftDeletes -}}
+{{if .Data.AddSoftDeletes -}}
 func TestSoftDelete(t *testing.T) {
   {{- range $data.Tables}}
   {{- if .IsJoinTable -}}
@@ -143,7 +143,7 @@ func TestCount(t *testing.T) {
   {{- end -}}
 }
 
-{{if not .Options.NoHooks -}}
+{{if not .Data.NoHooks -}}
 func TestHooks(t *testing.T) {
   {{- range $data.Tables}}
   {{- if .IsJoinTable -}}

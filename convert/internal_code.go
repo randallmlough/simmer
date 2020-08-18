@@ -67,7 +67,7 @@ func SanitizePackageName(pkg string) string {
 	return invalidPackageNameChar.ReplaceAllLiteralString(filepath.Base(pkg), "_")
 }
 
-// take a string in the form github.com/package/blah.Type and split it into package and type
+// take a string in the form github.com/package/blah.typ and split it into package and type
 func PkgAndType(name string) (string, string) {
 	parts := strings.Split(name, ".")
 	if len(parts) == 1 {

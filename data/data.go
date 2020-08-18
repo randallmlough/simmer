@@ -34,15 +34,11 @@ type Data struct {
 	RQ string
 
 	// Control various generation features
-	//AddGlobal        bool
-	//AddPanic         bool
-	//AddSoftDeletes   bool
-	//NoContext        bool
-	//NoHooks          bool
-	//NoAutoTimestamps bool
-	//NoRowsAffected   bool
-	//NoDriverTemplates bool
-	//NoBackReferencing bool
+	NoContext        bool `json:"no_context" yaml:"no_context"`
+	AddSoftDeletes   bool `json:"add_soft_deletes" yaml:"add_soft_deletes"`
+	NoRowsAffected   bool `json:"no_rows_affected" yaml:"no_rows_affected"`
+	NoHooks          bool `json:"no_hooks" yaml:"no_hooks"`
+	NoAutoTimestamps bool `json:"no_auto_timestamps" yaml:"no_auto_timestamps"`
 
 	// Tags control which tags are added to the struct
 	//Tags []string
@@ -84,9 +80,14 @@ type TypeReplace struct {
 }
 
 type Options struct {
-	DBConfig           *database.Config
-	DatabaseDriverName string
-	Aliases            Aliases
+	DBConfig           *database.Config `json:"-" yaml:"-"`
+	DatabaseDriverName string           `json:"database_driver_name" yaml:"database_driver_name"`
+	Aliases            Aliases          `json:"aliases" yaml:"aliases"`
+	NoContext          bool             `json:"no_context" yaml:"no_context"`
+	AddSoftDeletes     bool             `json:"add_soft_deletes" yaml:"add_soft_deletes"`
+	NoRowsAffected     bool             `json:"no_rows_affected" yaml:"no_rows_affected"`
+	NoHooks            bool             `json:"no_hooks" yaml:"no_hooks"`
+	NoAutoTimestamps   bool             `json:"no_auto_timestamps" yaml:"no_auto_timestamps"`
 }
 
 func New(opts Options) (*Data, error) {
@@ -102,6 +103,11 @@ func New(opts Options) (*Data, error) {
 	}
 
 	data.initAliases(opts.Aliases)
+	data.NoContext = opts.NoContext
+	data.AddSoftDeletes = opts.AddSoftDeletes
+	data.NoRowsAffected = opts.NoRowsAffected
+	data.NoHooks = opts.NoHooks
+	data.NoAutoTimestamps = opts.NoAutoTimestamps
 	return data, nil
 }
 

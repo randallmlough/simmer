@@ -16,7 +16,7 @@ func TestBuildType(t *testing.T) {
 		return
 	}
 
-	t.Run("create new Type from user schema", func(t *testing.T) {
+	t.Run("create new typ from user schema", func(t *testing.T) {
 
 		userSource, err := filesToAstSources("testdata/spec/types/user.graphql")
 		if err != nil {

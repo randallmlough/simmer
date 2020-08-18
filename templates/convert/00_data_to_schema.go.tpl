@@ -9,8 +9,8 @@
 {{/*
 	import required data and schema packages
 */}}
-{{ reserveImport $dataReplacement.Import}}
-{{ reserveImport $schemaReplacement.Import}}
+{{ addImport $dataReplacement.Import}}
+{{ addImport $schemaReplacement.Import}}
 
 {{ $object := $model.Object }}
 {{ $alias := $data.Aliases.Table $table.Name }}
@@ -21,16 +21,8 @@ func {{$alias.UpSingular |go }}ModelToObject(m *{{$dataReplacement}}.{{ $alias.U
 
 	r := &{{$schemaReplacement}}.{{ $object.Name |go }}{
 		{{- range $field := $object.Fields }}
-			{{ if isBuiltin $field.TableField.Type -}}
-				{{- if $field.SchemaField.IsRequired -}}
-				{{ $field.SchemaField.Name|go }}: m.{{ $field.TableField.Name|go }},
-				{{- else -}}
-				{{ $field.SchemaField.Name|go }}: &m.{{ $field.TableField.Name|go }},
-				{{- end -}}
-			{{- else -}}
-			{{ $field.SchemaField.Name|go }}: {{ $field.ToObjectField }}(m.{{ $field.TableField.Name|go }}),
-			{{- end -}}
-		{{- end }}
+			{{ $field.SchemaField.Name|go }}: {{ $field.ToObjectField "m"}},
+		{{- end -}}
 	}
 
 	return r

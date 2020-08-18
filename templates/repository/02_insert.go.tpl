@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $model := .Model.Name | singular -}}
 {{- $modelUppercase := $model | titleCase }}
 
@@ -13,3 +14,4 @@ func (db *{{$modelUppercase}}) Insert{{$modelUppercase}}(ctx context.Context, m 
 	}
 	return nil
 }
+{{end}}

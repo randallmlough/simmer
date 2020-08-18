@@ -15,8 +15,8 @@
 func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAlias.Local}}(t *testing.T) {
 	var err error
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -33,15 +33,15 @@ func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAli
 		t.Fatal(err)
 	}
 
-	if err := a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := a.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = b.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = b.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
 	for i, x := range []*{{$ftable.UpSingular}}{&b, &c} {
-		err = a.Set{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, i != 0, x)
+		err = a.Set{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +62,7 @@ func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAli
 		}
 
 		{{if setInclude .ForeignColumn $foreignPKeyCols -}}
-		if exists, err := {{$ftable.UpSingular}}Exists({{if not $options.NoContext}}ctx, {{end -}} tx, x.{{$foreignPKeyCols | stringMap $.StringFuncs.titleCase | join ", x."}}); err != nil {
+		if exists, err := {{$ftable.UpSingular}}Exists({{if not $data.NoContext}}ctx, {{end -}} tx, x.{{$foreignPKeyCols | stringMap $.StringFuncs.titleCase | join ", x."}}); err != nil {
 			t.Fatal(err)
 		} else if !exists {
 			t.Error("want 'x' to exist")
@@ -71,7 +71,7 @@ func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAli
 		zero := reflect.Zero(reflect.TypeOf(x.{{$fcolField}}))
 		reflect.Indirect(reflect.ValueOf(&x.{{$fcolField}})).Set(zero)
 
-		if err = x.Reload({{if not $options.NoContext}}ctx, {{end -}} tx); err != nil {
+		if err = x.Reload({{if not $data.NoContext}}ctx, {{end -}} tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 		{{- end}}
@@ -84,7 +84,7 @@ func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAli
 			t.Error("foreign key was wrong value", a.{{$colField}}, x.{{$fcolField}})
 		}
 
-		if {{if not $options.NoRowsAffected}}_, {{end -}} err = x.Delete({{if not $options.NoContext}}ctx, {{end -}} tx {{- if and $options.AddSoftDeletes $canSoftDelete}}, true{{end}}); err != nil {
+		if {{if not $data.NoRowsAffected}}_, {{end -}} err = x.Delete({{if not $data.NoContext}}ctx, {{end -}} tx {{- if and $data.AddSoftDeletes $canSoftDelete}}, true{{end}}); err != nil {
 			t.Fatal("failed to delete x", err)
 		}
 	}
@@ -94,8 +94,8 @@ func test{{$ltable.UpSingular}}OneToOneSetOp{{$ftable.UpSingular}}Using{{$relAli
 func test{{$ltable.UpSingular}}OneToOneRemoveOp{{$ftable.UpSingular}}Using{{$relAlias.Local}}(t *testing.T) {
 	var err error
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -109,19 +109,19 @@ func test{{$ltable.UpSingular}}OneToOneRemoveOp{{$ftable.UpSingular}}Using{{$rel
 		t.Fatal(err)
 	}
 
-	if err = a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = a.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = a.Set{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, true, &b); err != nil {
+	if err = a.Set{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, true, &b); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = a.Remove{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, &b); err != nil {
+	if err = a.Remove{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, &b); err != nil {
 		t.Error("failed to remove relationship")
 	}
 
-	count, err := a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}

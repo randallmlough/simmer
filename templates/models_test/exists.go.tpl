@@ -12,15 +12,15 @@ func test{{$alias.UpPlural}}Exists(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = o.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Error(err)
 	}
 
 	{{$pkeyArgs := $model.Table.PKey.Columns | stringMap (aliasCols $alias) | prefixStringSlice (printf "%s." "o") | join ", " -}}
-	e, err := {{$alias.UpSingular}}Exists({{if not $options.NoContext}}ctx, {{end -}} tx, {{$pkeyArgs}})
+	e, err := {{$alias.UpSingular}}Exists({{if not $data.NoContext}}ctx, {{end -}} tx, {{$pkeyArgs}})
 	if err != nil {
 		t.Errorf("Unable to check if {{$alias.UpSingular}} exists: %s", err)
 	}

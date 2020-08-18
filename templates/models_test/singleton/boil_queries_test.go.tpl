@@ -1,6 +1,6 @@
 var dbNameRand *rand.Rand
 
-{{if .Options.NoContext -}}
+{{if .Data.NoContext -}}
 func MustTx(transactor simmer.Transactor, err error) simmer.Transactor {
 	if err != nil {
 		panic(fmt.Sprintf("Cannot create a transactor: %s", err))

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/randallmlough/simmer/data"
 	"github.com/randallmlough/simmer/database"
 	"golang.org/x/mod/modfile"
 	"gopkg.in/yaml.v2"
@@ -43,8 +44,9 @@ type Config struct {
 	Verbose          bool   `json:"verbose" yaml:"verbose"`
 	Version          string `toml:"-" json:"-" yaml:"-"`
 
-	Schema         StringList `yaml:"schema,omitempty"`
-	RootImportPath string     `json:"root_import_path" yaml:"root_import_path"`
+	Models         data.Options `json:"models" yaml:"models"`
+	Schema         StringList   `yaml:"schema,omitempty"`
+	RootImportPath string       `json:"root_import_path" yaml:"root_import_path"`
 }
 
 func LoadConfig(pathToConfigFile string) (*Config, error) {

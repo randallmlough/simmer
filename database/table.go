@@ -74,3 +74,7 @@ func (t Table) CanSoftDelete() bool {
 	}
 	return false
 }
+
+func (t Table) Fields() ColumnList {
+	return t.Columns
+}

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -69,6 +70,32 @@ func (s Set) Format() []byte {
 // Reset will reset the set by creating a new Set struct and overriding the original.
 func (s *Set) Reset() {
 	*s = Set{}
+}
+
+func (s *Set) Add(imports string) bool {
+	if s.Standard.Exists(imports) {
+		return false
+	}
+	s.Standard = append(s.Standard, strconv.Quote(imports))
+	return true
+}
+
+func (s *Set) Merge(set Set) {
+	for _, importPath := range set.Standard {
+		if s.Standard.Exists(importPath) {
+			continue
+		} else {
+			s.Standard = append(s.Standard, importPath)
+		}
+	}
+
+	for _, importPath := range set.ThirdParty {
+		if s.ThirdParty.Exists(importPath) {
+			continue
+		} else {
+			s.ThirdParty = append(s.ThirdParty, importPath)
+		}
+	}
 }
 
 // SetFromInterface creates a set from a theoretical map[string]interface{}.
@@ -192,6 +219,16 @@ func (l List) Less(i, j int) bool {
 	}
 
 	return false
+}
+
+func (l List) Exists(value string) bool {
+	var exists bool
+	for _, list := range l {
+		if list == strconv.Quote(value) {
+			exists = true
+		}
+	}
+	return exists
 }
 
 // NewDefaultImports returns a default Imports struct.

@@ -2,10 +2,10 @@
 	{{- $data := .Data -}}
 	{{- $model := .Model -}}
 	{{- $options := .Options -}}
-	{{- if not $options.NoAutoTimestamps -}}
+	{{- if not $data.NoAutoTimestamps -}}
 	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "created_at" "updated_at"}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 		currTime := time.Now().In(simmer.GetLocation())
@@ -33,7 +33,7 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	}
 		{{end -}}
 	{{end}}
@@ -43,10 +43,10 @@
 	{{- $data := .Data -}}
 	{{- $model := .Model -}}
 	{{- $options := .Options -}}
-	{{- if not $options.NoAutoTimestamps -}}
+	{{- if not $data.NoAutoTimestamps -}}
 	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "updated_at"}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 		currTime := time.Now().In(simmer.GetLocation())
@@ -59,7 +59,7 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	}
 		{{end -}}
 	{{end}}
@@ -69,10 +69,10 @@
 	{{- $data := .Data -}}
 	{{- $model := .Model -}}
 	{{- $options := .Options -}}
-	{{- if not $options.NoAutoTimestamps -}}
+	{{- if not $data.NoAutoTimestamps -}}
 	{{- $colNames := $model.Table.Columns | columnNames -}}
 	{{if containsAny $colNames "created_at" "updated_at"}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	if !simmer.TimestampsAreSkipped(ctx) {
 		{{end -}}
 	currTime := time.Now().In(simmer.GetLocation())
@@ -96,7 +96,7 @@
 				{{- end -}}
 			{{- end -}}
 		{{end}}
-		{{if not $options.NoContext -}}
+		{{if not $data.NoContext -}}
 	}
 		{{end -}}
 	{{end}}

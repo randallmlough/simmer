@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $model := .Model.Name | singular -}}
 {{- $modelUppercase := $model | titleCase }}
 {{- $canSoftDelete := .Model.Table.CanSoftDelete }}
@@ -70,3 +71,4 @@ func (val {{$valType}}) {{.Name | camelCase}}Required() {{$valType}}Func {
     }
 }
 {{- end }}
+{{end}}

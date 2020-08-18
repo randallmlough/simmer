@@ -12,7 +12,7 @@
 func (o *{{$ltable.UpSingular}}) {{$rel.Foreign}}(mods ...queries.QueryMod) ({{$ftable.DownSingular}}Query) {
 	queryMods := []queries.QueryMod{
 		queries.Where("{{$fkey.ForeignColumn | $data.Quotes}} = ?", o.{{$ltable.Column $fkey.Column}}),
-		{{if and $options.AddSoftDeletes $canSoftDelete -}}
+		{{if and $data.AddSoftDeletes $canSoftDelete -}}
 		queries.WhereIsNull("deleted_at"),
 		{{- end}}
 	}

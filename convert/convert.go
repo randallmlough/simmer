@@ -878,7 +878,7 @@ func getConvertConfig(enums []*Enum, model *Model, field *Field) (cc ConvertConf
 		fmt.Println(field.Name, field.Type)
 		//if field.Name == "name" {
 		//	fmt.Println("is name")
-		//	fmt.Println(field.Type)
+		//	fmt.Println(field.typ)
 		//}
 	}
 	enum := findEnum(enums, field.TypeWithoutPointer)
@@ -895,7 +895,7 @@ func getConvertConfig(enums []*Enum, model *Model, field *Field) (cc ConvertConf
 		)
 
 	} else if graphType != boilType {
-		//fmt.Printf("CUSTOM TYPE:\nBOIL:\n Name: %s Type:%s\n GRAPH:\n Name: %s Type:%s\n", field.BoilerField.Name, boilType, field.Name, graphType)
+		//fmt.Printf("CUSTOM TYPE:\nBOIL:\n Name: %s typ:%s\n GRAPH:\n Name: %s typ:%s\n", field.BoilerField.Name, boilType, field.Name, graphType)
 		cc.IsCustom = true
 
 		if field.IsPrimaryNumberID || field.IsNumberID {

@@ -21,9 +21,10 @@ type Type struct {
 	Enums      []*Enum
 	Scalars    []*Scalar
 
-	source  *ast.Source
-	schema  *ast.Schema
-	Imports *importers.Set
+	source   *ast.Source
+	schema   *ast.Schema
+	Imports  *importers.Set
+	package_ types.Package
 }
 
 type Method struct {
@@ -55,35 +56,35 @@ func (t Types) Type(name string) *Type {
 	return nil
 }
 
-func gatherTypes(parentSchema *Schema) ([]Type, error) {
+func gatherTypes(schema *Schema) ([]Type, error) {
 
-	typesSources := parentSchema.separateTypes()
+	typesSources := schema.separateTypes()
 
 	var typs []Type
 	for _, source := range typesSources {
-		typ, err := buildType(parentSchema, source)
+		t := &Type{Imports: schema.imports, source: source}
+		err := t.construct(schema)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to build type")
 		}
-		typs = append(typs, *typ)
+		typs = append(typs, *t)
 	}
 	return typs, nil
 }
 
-func buildType(parentSchema *Schema, source *ast.Source) (*Type, error) {
-	ast, err := sourceToSchemaDoc(source)
+func (t *Type) construct(parentSchema *Schema) error {
+	ast, err := sourceToSchemaDoc(t.source)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse schema source %s", source.Name)
+		return errors.Wrapf(err, "failed to parse schema source %s", t.source.Name)
 	}
 	schema, err := astSchemaDocToAstSchema(ast)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to validate %s", source.Name)
+		return errors.Wrapf(err, "failed to validate %s", t.source.Name)
 	}
 
-	objs := getObjects(parentSchema.schema, schema)
-	imports := objs.imports()
+	objs := t.objects(parentSchema.schema, schema)
 
-	_, anchorTypeName := filepath.Split(source.Name)
+	_, anchorTypeName := filepath.Split(t.source.Name)
 	anchorTypeName = strings.ReplaceAll(anchorTypeName, ".graphql", "")
 
 	anchorObject, objects, inputs := objs.split(anchorTypeName)
@@ -96,20 +97,18 @@ func buildType(parentSchema *Schema, source *ast.Source) (*Type, error) {
 
 	methods := getMethods(schema)
 
-	return &Type{
-		Type:       anchorObject,
-		Methods:    methods,
-		Interfaces: interfaces,
-		Objects:    objects,
-		Inputs:     inputs,
-		Enums:      enums,
-		Scalars:    scalars,
-		schema:     schema,
-		Imports:    imports,
-	}, nil
+	t.Type = anchorObject
+	t.Methods = methods
+	t.Interfaces = interfaces
+	t.Objects = objects
+	t.Inputs = inputs
+	t.Enums = enums
+	t.Scalars = scalars
+	t.schema = schema
+	return nil
 }
 
-func getObjects(parentSchema, schema *ast.Schema) (objects Objects) {
+func (t *Type) objects(parentSchema, schema *ast.Schema) (objects Objects) {
 	for _, schemaType := range schema.Types {
 		if schemaType == schema.Query || schemaType == schema.Mutation || schemaType == schema.Subscription {
 			continue
@@ -132,7 +131,7 @@ func getObjects(parentSchema, schema *ast.Schema) (objects Objects) {
 				object.Implements = append(object.Implements, implementor.Name)
 			}
 
-			object.Fields = objectFields(parentSchema, schemaType.Fields)
+			object.Fields = t.fields(parentSchema, schemaType.Fields)
 
 			if schemaType.Kind == ast.InputObject {
 				object.isInput = true
@@ -144,21 +143,20 @@ func getObjects(parentSchema, schema *ast.Schema) (objects Objects) {
 	return
 }
 
-func objectFields(schema *ast.Schema, fields ast.FieldList) []*Field {
+func (t *Type) fields(schema *ast.Schema, fields ast.FieldList) []*Field {
 	f := make([]*Field, 0, len(fields))
 	for _, field := range fields {
 		var typ types.Type
-		imps := new(Imports)
+		var pkg *types.Package
 		fieldDef := schema.Types[field.Type.Name()]
 		fieldType := templates.ToGo(field.Type.Name())
-		imps.Package, fieldType = gqlToGoPackage(fieldType)
-		imps.isStandardLib = isBuiltin(fieldType)
+		pkg, fieldType = gqlToGoPackage(fieldType)
 
 		switch fieldDef.Kind {
 		case ast.Scalar:
 			// no user defined model, referencing a default scalar
 			typ = types.NewNamed(
-				types.NewTypeName(0, imps.Package, fieldType, nil),
+				types.NewTypeName(0, pkg, fieldType, nil),
 				nil,
 				nil,
 			)
@@ -166,7 +164,7 @@ func objectFields(schema *ast.Schema, fields ast.FieldList) []*Field {
 		case ast.Interface, ast.Union:
 			// no user defined model, referencing a generated interface type
 			typ = types.NewNamed(
-				types.NewTypeName(0, imps.Package, fieldType, nil),
+				types.NewTypeName(0, pkg, fieldType, nil),
 				types.NewInterfaceType([]*types.Func{}, []types.Type{}),
 				nil,
 			)
@@ -174,7 +172,7 @@ func objectFields(schema *ast.Schema, fields ast.FieldList) []*Field {
 		case ast.Enum:
 			// no user defined model, must reference a generated enum
 			typ = types.NewNamed(
-				types.NewTypeName(0, imps.Package, fieldType, nil),
+				types.NewTypeName(0, pkg, fieldType, nil),
 				nil,
 				nil,
 			)
@@ -182,7 +180,7 @@ func objectFields(schema *ast.Schema, fields ast.FieldList) []*Field {
 		case ast.Object, ast.InputObject:
 			// no user defined model, must reference a generated struct
 			typ = types.NewNamed(
-				types.NewTypeName(0, imps.Package, fieldType, nil),
+				types.NewTypeName(0, pkg, fieldType, nil),
 				types.NewStruct(nil, nil),
 				nil,
 			)
@@ -200,13 +198,13 @@ func objectFields(schema *ast.Schema, fields ast.FieldList) []*Field {
 		name := field.Name
 		f = append(f, &Field{
 			Name:         name,
-			Type:         typ,
+			type_:        typ,
 			IsPrimaryKey: templates.ToGo(field.Type.Name()) == "ID",
 			IsRelation:   fieldDef.Kind == ast.Object || fieldDef.Kind == ast.InputObject,
 			IsRequired:   field.Type.NonNull,
 			Description:  field.Description,
-			Tag:          `json:"` + field.Name + `"`,
-			Imports:      imps,
+			package_:     pkg,
+			imports:      t.Imports,
 		})
 	}
 	return f

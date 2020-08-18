@@ -1,7 +1,8 @@
 {{- $schema := .Schema -}}
 {{ range $enum := $schema.Enums }}
-	{{- reserveImport "fmt"}}
-	{{- reserveImport "strconv"}}
+	{{- addImport "fmt"}}
+	{{- addImport "strconv"}}
+	{{- addImport "io"}}
 	{{ with .Description }} {{.|prefixLines "// "}} {{end}}
 	type {{.Name|go }} string
 	const (

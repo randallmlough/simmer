@@ -88,13 +88,13 @@
 
 		{{ range $field := .Fields -}}
 			{{ if $field.ConvertConfig.IsDomainType}}
-{{/*			func {{ $field.ConvertConfig.ToBoiler }}(v {{ $field.Type }}) {{ $field.BoilerField.Type }}{*/}}
-{{/*				{{ if eq $field.BoilerField.Type "string" }}*/}}
+{{/*			func {{ $field.ConvertConfig.ToBoiler }}(v {{ $field.typ }}) {{ $field.BoilerField.typ }}{*/}}
+{{/*				{{ if eq $field.BoilerField.typ "string" }}*/}}
 {{/*					return string(v)*/}}
 {{/*				{{ end }}*/}}
 {{/*			}*/}}
-{{/*			func {{ $field.ConvertConfig.ToDomain }}(v {{ $field.BoilerField.Type }}) {{ $field.Type }}{*/}}
-{{/*				return {{ $field.Type }}(v)*/}}
+{{/*			func {{ $field.ConvertConfig.ToDomain }}(v {{ $field.BoilerField.typ }}) {{ $field.typ }}{*/}}
+{{/*				return {{ $field.typ }}(v)*/}}
 {{/*			}*/}}
 			{{ end }}
 		{{end }}

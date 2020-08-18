@@ -5,16 +5,16 @@
 {{- $schemaTable := $model.Table.Name | $data.SchemaTable}}
 {{if $options.AddGlobal -}}
 // UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *{{$alias.UpSingular}}) UpsertG({{if not $options.NoContext}}ctx context.Context, {{end -}} updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) error {
-	return o.Upsert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, updateOnConflict, conflictColumns, updateColumns, insertColumns)
+func (o *{{$alias.UpSingular}}) UpsertG({{if not $data.NoContext}}ctx context.Context, {{end -}} updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) error {
+	return o.Upsert({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, updateOnConflict, conflictColumns, updateColumns, insertColumns)
 }
 
 {{end -}}
 
 {{if and $options.AddGlobal $options.AddPanic -}}
 // UpsertGP attempts an insert, and does an update or ignore on conflict. Panics on error.
-func (o *{{$alias.UpSingular}}) UpsertGP({{if not $options.NoContext}}ctx context.Context, {{end -}} updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) {
-	if err := o.Upsert({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, updateOnConflict, conflictColumns, updateColumns, insertColumns); err != nil {
+func (o *{{$alias.UpSingular}}) UpsertGP({{if not $data.NoContext}}ctx context.Context, {{end -}} updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) {
+	if err := o.Upsert({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, updateOnConflict, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -24,8 +24,8 @@ func (o *{{$alias.UpSingular}}) UpsertGP({{if not $options.NoContext}}ctx contex
 {{if $options.AddPanic -}}
 // UpsertP attempts an insert using an executor, and does an update or ignore on conflict.
 // UpsertP panics on error.
-func (o *{{$alias.UpSingular}}) UpsertP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) {
-	if err := o.Upsert({{if not $options.NoContext}}ctx, {{end -}} exec, updateOnConflict, conflictColumns, updateColumns, insertColumns); err != nil {
+func (o *{{$alias.UpSingular}}) UpsertP({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) {
+	if err := o.Upsert({{if not $data.NoContext}}ctx, {{end -}} exec, updateOnConflict, conflictColumns, updateColumns, insertColumns); err != nil {
 		panic(simmer.WrapErr(err))
 	}
 }
@@ -34,15 +34,15 @@ func (o *{{$alias.UpSingular}}) UpsertP({{if $options.NoContext}}exec simmer.Exe
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See simmer.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *{{$alias.UpSingular}}) Upsert({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) error {
+func (o *{{$alias.UpSingular}}) Upsert({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns simmer.Columns) error {
 	if o == nil {
 		return errors.New("{{$options.PkgName}}: no {{$model.Table.Name}} provided for upsert")
 	}
 
 	{{- template "timestamp_upsert_helper" . }}
 
-	{{if not $options.NoHooks -}}
-	if err := o.doBeforeUpsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec); err != nil {
+	{{if not $data.NoHooks -}}
+	if err := o.doBeforeUpsertHooks({{if not $data.NoContext}}ctx, {{end -}} exec); err != nil {
 		return err
 	}
 	{{- end}}
@@ -125,7 +125,7 @@ func (o *{{$alias.UpSingular}}) Upsert({{if $options.NoContext}}exec simmer.Exec
 		returns = queries.PtrsFromMapping(value, cache.retMapping)
 	}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, cache.query)
 		fmt.Fprintln(simmer.DebugWriter, vals)
@@ -139,7 +139,7 @@ func (o *{{$alias.UpSingular}}) Upsert({{if $options.NoContext}}exec simmer.Exec
 	{{end -}}
 
 	if len(cache.retMapping) != 0 {
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		err = exec.QueryRow(cache.query, vals...).Scan(returns...)
 		{{else -}}
 		err = exec.QueryRowContext(ctx, cache.query, vals...).Scan(returns...)
@@ -148,7 +148,7 @@ func (o *{{$alias.UpSingular}}) Upsert({{if $options.NoContext}}exec simmer.Exec
 			err = nil // Postgres doesn't return anything when there's no update
 		}
 	} else {
-		{{if $options.NoContext -}}
+		{{if $data.NoContext -}}
 		_, err = exec.Exec(cache.query, vals...)
 		{{else -}}
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
@@ -164,8 +164,8 @@ func (o *{{$alias.UpSingular}}) Upsert({{if $options.NoContext}}exec simmer.Exec
 		{{$alias.DownSingular}}UpsertCacheMut.Unlock()
 	}
 
-	{{if not $options.NoHooks -}}
-	return o.doAfterUpsertHooks({{if not $options.NoContext}}ctx, {{end -}} exec)
+	{{if not $data.NoHooks -}}
+	return o.doAfterUpsertHooks({{if not $data.NoContext}}ctx, {{end -}} exec)
 	{{- else -}}
 	return nil
 	{{- end}}

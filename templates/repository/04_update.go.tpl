@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $model := .Model.Name | singular -}}
 {{- $modelUppercase := $model | titleCase }}
 
@@ -14,3 +15,4 @@ func (db *{{$modelUppercase}}) Update{{$modelUppercase}}(ctx context.Context, m 
 	}
 	return nil
 }
+{{end}}

@@ -18,9 +18,9 @@ type (
 	// {{$alias.UpSingular}}Slice is an alias for a slice of pointers to {{$alias.UpSingular}}.
 	// This should generally be used opposed to []{{$alias.UpSingular}}.
 	{{$alias.UpSingular}}Slice []*{{$alias.UpSingular}}
-	{{if not $options.NoHooks -}}
+	{{if not $data.NoHooks -}}
 	// {{$alias.UpSingular}}Hook is the signature for custom {{$alias.UpSingular}} hook methods
-	{{$alias.UpSingular}}Hook func({{if $options.NoContext}}simmer.Executor{{else}}context.Context, simmer.ContextExecutor{{end}}, *{{$alias.UpSingular}}) error
+	{{$alias.UpSingular}}Hook func({{if $data.NoContext}}simmer.Executor{{else}}context.Context, simmer.ContextExecutor{{end}}, *{{$alias.UpSingular}}) error
 	{{- end}}
 
 	{{$alias.DownSingular}}Query struct {

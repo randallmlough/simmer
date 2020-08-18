@@ -164,7 +164,7 @@ func bindChecks(obj interface{}) (structType reflect.Type, sliceType reflect.Typ
 	kind := typ.Kind()
 
 	setErr := func() {
-		err = errors.Errorf("obj type should be *Type, *[]Type, or *[]*Type but was %q", reflect.TypeOf(obj).String())
+		err = errors.Errorf("obj type should be *typ, *[]typ, or *[]*typ but was %q", reflect.TypeOf(obj).String())
 	}
 
 	for i := 0; ; i++ {

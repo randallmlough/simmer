@@ -26,7 +26,7 @@ func (o *{{$ltable.UpSingular}}) {{$relAlias.Local}}(mods ...queries.QueryMod) {
 		{{else -}}
 	queryMods = append(queryMods,
 		queries.Where("{{$schemaForeignTable}}.{{$rel.ForeignColumn | $data.Quotes}}=?", o.{{$ltable.Column $rel.Column}}),
-		{{if and $options.AddSoftDeletes $canSoftDelete -}}
+		{{if and $data.AddSoftDeletes $canSoftDelete -}}
 		queries.WhereIsNull("{{$schemaForeignTable}}.{{"deleted_at" | $data.Quotes}}"),
 		{{- end}}
 	)

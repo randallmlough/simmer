@@ -1,5 +1,6 @@
+{{ if .Model.HasModel }}
 {{- $model := .Model -}}
-{{- $options := .Options -}}
+{{- $data := .Data -}}
 {{- $modelName := $model.Name | singular -}}
 {{- $modelNameUppercase := $modelName | titleCase }}
 {{- $canSoftDelete := $model.Table.CanSoftDelete }}
@@ -12,7 +13,7 @@ func (db *{{$modelNameUppercase}}) FindBy{{$columnUppercase}}(ctx context.Contex
     o := initOptions(opts...)
     {{$modelName}}, err := db.Select{{$modelNameUppercase}}(ctx,
         Select(o.Columns.Cols...),
-        Where(`{{.ColumnName}} = ?{{if and $options.AddSoftDeletes $canSoftDelete}} and "deleted_at" is null{{end}}`, {{$arg}}),
+        Where(`{{.ColumnName}} = ?{{if and $data.AddSoftDeletes $canSoftDelete}} and "deleted_at" is null{{end}}`, {{$arg}}),
     )
     if err != nil {
     	if errors.Cause(err) == sql.ErrNoRows {
@@ -23,3 +24,4 @@ func (db *{{$modelNameUppercase}}) FindBy{{$columnUppercase}}(ctx context.Contex
     return {{$modelName}}, nil
 }
 {{- end }}
+{{end}}

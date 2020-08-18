@@ -11,8 +11,8 @@
 		{{- $fcolField := $ftable.Column $fkey.ForeignColumn -}}
 		{{- $usesPrimitives := usesPrimitives $data.Tables $fkey.Table $fkey.Column $fkey.ForeignTable $fkey.ForeignColumn }}
 func test{{$ltable.UpSingular}}ToOne{{$ftable.UpSingular}}Using{{$rel.Foreign}}(t *testing.T) {
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var local {{$ltable.UpSingular}}
@@ -26,7 +26,7 @@ func test{{$ltable.UpSingular}}ToOne{{$ftable.UpSingular}}Using{{$rel.Foreign}}(
 		t.Errorf("Unable to randomize {{$ftable.UpSingular}} struct: %s", err)
 	}
 
-	if err := foreign.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := foreign.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -35,11 +35,11 @@ func test{{$ltable.UpSingular}}ToOne{{$ftable.UpSingular}}Using{{$rel.Foreign}}(
 	{{else -}}
 	queries.Assign(&local.{{$colField}}, foreign.{{$fcolField}})
 	{{end -}}
-	if err := local.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := local.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.{{$rel.Foreign}}().One({{if not $options.NoContext}}ctx, {{end -}} tx)
+	check, err := local.{{$rel.Foreign}}().One({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func test{{$ltable.UpSingular}}ToOne{{$ftable.UpSingular}}Using{{$rel.Foreign}}(
 	}
 
 	slice := {{$ltable.UpSingular}}Slice{&local}
-	if err = local.L.Load{{$rel.Foreign}}({{if not $options.NoContext}}ctx, {{end -}} tx, false, (*[]*{{$ltable.UpSingular}})(&slice), nil); err != nil {
+	if err = local.L.Load{{$rel.Foreign}}({{if not $data.NoContext}}ctx, {{end -}} tx, false, (*[]*{{$ltable.UpSingular}})(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if local.R.{{$rel.Foreign}} == nil {
@@ -61,7 +61,7 @@ func test{{$ltable.UpSingular}}ToOne{{$ftable.UpSingular}}Using{{$rel.Foreign}}(
 	}
 
 	local.R.{{$rel.Foreign}} = nil
-	if err = local.L.Load{{$rel.Foreign}}({{if not $options.NoContext}}ctx, {{end -}} tx, true, &local, nil); err != nil {
+	if err = local.L.Load{{$rel.Foreign}}({{if not $data.NoContext}}ctx, {{end -}} tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
 	if local.R.{{$rel.Foreign}} == nil {

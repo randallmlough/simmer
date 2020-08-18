@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $models := .Model.Name -}}
 {{- $modelsUppercase := $models | plural | titleCase }}
 {{- $model := $models | singular -}}
@@ -26,3 +27,4 @@ func (db *{{$modelUppercase}}) Select{{$modelsUppercase}}(ctx context.Context, q
 	}
 	return results, nil
 }
+{{end}}

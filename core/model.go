@@ -1,106 +1,122 @@
 package core
 
 import (
+	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/randallmlough/simmer/database"
+	"github.com/randallmlough/simmer/importers"
 	"github.com/randallmlough/simmer/schema"
+	"github.com/randallmlough/simmer/templates"
 	"github.com/volatiletech/strmangle"
 	"strings"
 )
 
 type Model struct {
-	Name   string
-	Table  database.Table
-	Schema schema.Type
+	Name    string
+	Table   database.Table
+	Schema  schema.Type
+	imports *importers.Set
+}
+
+func (m *Model) HasModel() bool {
+	return m.Table.Name != ""
 }
 
 func (m *Model) HasObject() bool {
 	return m.Table.Name != "" && m.Schema.Type != nil
 }
 
-func (m *Model) Object() Object {
-	obj := Object{Name: m.Name}
-	fields := translateFields(m.Table.Columns, m.Schema.Type.Fields)
-	obj.Fields = fields
+func (m *Model) Object() *Object {
+	obj := &Object{Name: m.Name, imports: m.imports}
+	obj.translateFields(m.Table.Columns, m.Schema.Type.Fields)
 	return obj
-}
-
-func translateFields(columns database.ColumnList, schemaFields []*schema.Field) FieldList {
-	fieldMap := make(map[string]Field)
-	for _, column := range columns {
-		field := &DataField{
-			Name:       column.Name,
-			IsRequired: !column.Nullable,
-			Type:       column.Type,
-		}
-		name := strmangle.CamelCase(field.Name)
-		if f, exists := fieldMap[name]; exists {
-			f.TableField = field
-		} else {
-			fieldMap[name] = Field{
-				TableField: field,
-			}
-		}
-	}
-	for _, schemaField := range schemaFields {
-		field := &DataField{
-			Name:       schemaField.Name,
-			IsRequired: schemaField.IsRequired,
-			Type:       schemaField.Type.String(),
-		}
-		if f, exists := fieldMap[field.Name]; exists {
-			f.SchemaField = field
-			fieldMap[field.Name] = f
-		} else {
-			fieldMap[field.Name] = Field{
-				SchemaField: field,
-			}
-		}
-	}
-	var fields []Field
-	for _, field := range fieldMap {
-		if field.TableField == nil || field.SchemaField == nil {
-			continue
-		} else {
-			toColumn := getToTableColumn(getColumnTypeAsText(field.TableField.Type), getObjectFieldAsText(field.SchemaField.Type))
-			toObject := getToObjectField(getColumnTypeAsText(field.TableField.Type), getObjectFieldAsText(field.SchemaField.Type))
-			toColumn = "gqlutils." + toColumn
-			toObject = "gqlutils." + toObject
-			// Make these go-friendly for the helper/convert.go package
-			field.ToTableField = toColumn
-			field.ToObjectField = toObject
-			fields = append(fields, field)
-		}
-	}
-	return fields
 }
 
 // Object will exist if a model has both a matching table and schema
 type Object struct {
-	Name   string
-	Fields FieldList
+	Name    string
+	Fields  []ObjectField
+	imports *importers.Set
+}
+
+func (o *Object) translateFields(columns database.ColumnList, schemaFields []*schema.Field) {
+	fieldMap := make(map[string]ObjectField)
+	for _, column := range columns {
+		name := strmangle.CamelCase(column.Name)
+		if f, exists := fieldMap[name]; exists {
+			f.TableField = column
+			fieldMap[name] = f
+		} else {
+			fieldMap[name] = ObjectField{
+				TableField: column,
+			}
+		}
+	}
+	for _, schemaField := range schemaFields {
+		if f, exists := fieldMap[schemaField.Name]; exists {
+			f.SchemaField = *schemaField
+			fieldMap[schemaField.Name] = f
+		} else {
+			fieldMap[schemaField.Name] = ObjectField{
+				SchemaField: *schemaField,
+			}
+		}
+	}
+	var fields []ObjectField
+	for _, field := range fieldMap {
+		if field.TableField.Name == "" || field.SchemaField.Name == "" {
+			continue
+		} else {
+			field.imports = o.imports
+			fields = append(fields, field)
+		}
+	}
+	o.Fields = fields
 }
 
 // Object will exist if a model has both a matching table and schema
-type Field struct {
-	IsRequired bool
-	IsRelation bool
-
-	SchemaField *DataField
-	TableField  *DataField
-
-	ToTableField  string
-	ToObjectField string
+type ObjectField struct {
+	SchemaField schema.Field
+	TableField  database.Column
+	imports     *importers.Set
 }
 
-type DataField struct {
+func (f ObjectField) ToTableField(variable string) string {
+	var fieldConversion string
+	if isBuiltin(f.TableField.Type) && f.SchemaField.IsRequired {
+		return fmt.Sprintf("%s.%s", variable, templates.ToGo(f.SchemaField.Name))
+	} else {
+		funcName := getToTableColumn(getColumnTypeAsText(f.TableField.Type), getObjectFieldAsText(f.SchemaField.UnderlyingType()))
+		fieldConversion = "utils." + fmt.Sprintf("%s(%s.%s)", funcName, variable, templates.ToGo(f.SchemaField.Name))
+		f.imports.Add("github.com/randallmlough/simmer/utils")
+	}
+	return fieldConversion
+}
+
+func (f ObjectField) ToObjectField(variable string) string {
+	var fieldConversion string
+	if isBuiltin(f.TableField.Type) {
+		if f.SchemaField.IsRequired {
+			return fmt.Sprintf("%s.%s", variable, templates.ToGo(f.TableField.Name))
+		} else {
+			return fmt.Sprintf("&%s.%s", variable, templates.ToGo(f.TableField.Name))
+		}
+	} else {
+		funcName := getToObjectField(getColumnTypeAsText(f.TableField.Type), getObjectFieldAsText(f.SchemaField.UnderlyingType()))
+		fieldConversion = "utils." + fmt.Sprintf("%s(%s.%s)", funcName, variable, templates.ToGo(f.TableField.Name))
+		f.imports.Add("github.com/randallmlough/simmer/utils")
+	}
+	return fieldConversion
+}
+
+type Field struct {
 	Name       string
 	IsRequired bool
 	IsRelation bool
 	Type       string
 }
 
-type FieldList []Field
+type FieldList []ObjectField
 
 func getToTableColumn(columnFieldType, objectFieldType string) string {
 	return getObjectFieldAsText(objectFieldType) + "To" + getColumnTypeAsText(columnFieldType)
@@ -123,4 +139,28 @@ func getObjectFieldAsText(objectType string) string {
 		objectType = "Pointer" + objectType
 	}
 	return strcase.ToCamel(objectType)
+}
+
+func isBuiltin(typ string) bool {
+	if strings.HasPrefix(typ, "*") {
+		typ = strings.Replace(typ, "*", "", 1)
+	}
+	switch typ {
+	case "bool",
+		"int",
+		"int8",
+		"int16",
+		"int32",
+		"int64",
+		"uint",
+		"uint8",
+		"uint16",
+		"uint32",
+		"uint64",
+		"float32",
+		"float64",
+		"string":
+		return true
+	}
+	return false
 }

@@ -9,16 +9,16 @@
 {{- $canSoftDelete := $model.Table.CanSoftDelete }}
 {{if $options.AddGlobal -}}
 // {{$alias.UpSingular}}ExistsG checks if the {{$alias.UpSingular}} row exists.
-func {{$alias.UpSingular}}ExistsG({{if not $options.NoContext}}ctx context.Context, {{end -}} {{$pkArgs}}) (bool, error) {
-	return {{$alias.UpSingular}}Exists({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, {{$pkNames | join ", "}})
+func {{$alias.UpSingular}}ExistsG({{if not $data.NoContext}}ctx context.Context, {{end -}} {{$pkArgs}}) (bool, error) {
+	return {{$alias.UpSingular}}Exists({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, {{$pkNames | join ", "}})
 }
 
 {{end -}}
 
 {{if $options.AddPanic -}}
 // {{$alias.UpSingular}}ExistsP checks if the {{$alias.UpSingular}} row exists. Panics on error.
-func {{$alias.UpSingular}}ExistsP({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, {{$pkArgs}}) bool {
-	e, err := {{$alias.UpSingular}}Exists({{if not $options.NoContext}}ctx, {{end -}} exec, {{$pkNames | join ", "}})
+func {{$alias.UpSingular}}ExistsP({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, {{$pkArgs}}) bool {
+	e, err := {{$alias.UpSingular}}Exists({{if not $data.NoContext}}ctx, {{end -}} exec, {{$pkNames | join ", "}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
@@ -30,8 +30,8 @@ func {{$alias.UpSingular}}ExistsP({{if $options.NoContext}}exec simmer.Executor{
 
 {{if and $options.AddGlobal $options.AddPanic -}}
 // {{$alias.UpSingular}}ExistsGP checks if the {{$alias.UpSingular}} row exists. Panics on error.
-func {{$alias.UpSingular}}ExistsGP({{if not $options.NoContext}}ctx context.Context, {{end -}} {{$pkArgs}}) bool {
-	e, err := {{$alias.UpSingular}}Exists({{if $options.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, {{$pkNames | join ", "}})
+func {{$alias.UpSingular}}ExistsGP({{if not $data.NoContext}}ctx context.Context, {{end -}} {{$pkArgs}}) bool {
+	e, err := {{$alias.UpSingular}}Exists({{if $data.NoContext}}simmer.GetDB(){{else}}ctx, simmer.GetContextDB(){{end}}, {{$pkNames | join ", "}})
 	if err != nil {
 		panic(simmer.WrapErr(err))
 	}
@@ -42,15 +42,15 @@ func {{$alias.UpSingular}}ExistsGP({{if not $options.NoContext}}ctx context.Cont
 {{end -}}
 
 // {{$alias.UpSingular}}Exists checks if the {{$alias.UpSingular}} row exists.
-func {{$alias.UpSingular}}Exists({{if $options.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, {{$pkArgs}}) (bool, error) {
+func {{$alias.UpSingular}}Exists({{if $data.NoContext}}exec simmer.Executor{{else}}ctx context.Context, exec simmer.ContextExecutor{{end}}, {{$pkArgs}}) (bool, error) {
 	var exists bool
 	{{if $data.Dialect.UseCaseWhenExistsClause -}}
 	sql := "select case when exists(select top(1) 1 from {{$schemaTable}} where {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 1 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}) then 1 else 0 end"
 	{{- else -}}
-	sql := "select exists(select 1 from {{$schemaTable}} where {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 1 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}{{if and $options.AddSoftDeletes $canSoftDelete}} and {{"deleted_at" | $data.Quotes}} is null{{end}} limit 1)"
+	sql := "select exists(select 1 from {{$schemaTable}} where {{if $data.Dialect.UseIndexPlaceholders}}{{whereClause $data.LQ $data.RQ 1 $model.Table.PKey.Columns}}{{else}}{{whereClause $data.LQ $data.RQ 0 $model.Table.PKey.Columns}}{{end}}{{if and $data.AddSoftDeletes $canSoftDelete}} and {{"deleted_at" | $data.Quotes}} is null{{end}} limit 1)"
 	{{- end}}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	if simmer.DebugMode {
 		fmt.Fprintln(simmer.DebugWriter, sql)
 		fmt.Fprintln(simmer.DebugWriter, {{$pkNames | join ", "}})
@@ -63,7 +63,7 @@ func {{$alias.UpSingular}}Exists({{if $options.NoContext}}exec simmer.Executor{{
 	}
 	{{end -}}
 
-	{{if $options.NoContext -}}
+	{{if $data.NoContext -}}
 	row := exec.QueryRow(sql, {{$pkNames | join ", "}})
 	{{else -}}
 	row := exec.QueryRowContext(ctx, sql, {{$pkNames | join ", "}})

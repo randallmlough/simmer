@@ -228,7 +228,7 @@ func TestProcessTypeReplacements(t *testing.T) {
 				DBType: "serial",
 			},
 			Replace: database.Column{
-				Type: "excellent.Type",
+				Type: "excellent.typ",
 			},
 			Imports: importers.Set{
 				ThirdParty: []string{`"rock.com/excellent"`},
@@ -275,10 +275,10 @@ func TestProcessTypeReplacements(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if typ := s.Tables[0].Columns[0].Type; typ != "excellent.Type" {
+	if typ := s.Tables[0].Columns[0].Type; typ != "excellent.typ" {
 		t.Error("type was wrong:", typ)
 	}
-	if i := s.Config.Imports.BasedOnType["excellent.Type"].ThirdParty[0]; i != `"rock.com/excellent"` {
+	if i := s.Config.Imports.BasedOnType["excellent.typ"].ThirdParty[0]; i != `"rock.com/excellent"` {
 		t.Error("imports were not adjusted")
 	}
 

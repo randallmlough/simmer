@@ -1,3 +1,4 @@
+{{ if .Model.HasModel }}
 {{- $model := .Model.Name | singular -}}
 {{- $modelUppercase := $model | titleCase }}
 
@@ -12,3 +13,4 @@ type {{$modelUppercase}} struct {
 	val {{$model}}Validation
 	executor
 }
+{{end}}

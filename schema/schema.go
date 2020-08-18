@@ -2,6 +2,7 @@ package schema
 
 import (
 	"github.com/pkg/errors"
+	"github.com/randallmlough/simmer/importers"
 	"github.com/vektah/gqlparser/v2/ast"
 	"strings"
 )
@@ -17,15 +18,16 @@ type Schema struct {
 	Types   Types
 	sources []*ast.Source
 	schema  *ast.Schema
+	imports *importers.Set
 }
 
-func New(schemaFiles []string) (*Schema, error) {
+func New(schemaFiles []string, imports *importers.Set) (*Schema, error) {
 
 	s, err := loadSchema(schemaFiles)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse schema file(s)")
 	}
-
+	s.imports = imports
 	s.Types, err = gatherTypes(s)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to gather schema types")

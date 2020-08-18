@@ -14,8 +14,8 @@
 func test{{$ltable.UpSingular}}ToManyAddOp{{$relAlias.Local}}(t *testing.T) {
 	var err error
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -32,13 +32,13 @@ func test{{$ltable.UpSingular}}ToManyAddOp{{$relAlias.Local}}(t *testing.T) {
 		}
 	}
 
-	if err := a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := a.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = b.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = b.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = c.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = c.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -48,7 +48,7 @@ func test{{$ltable.UpSingular}}ToManyAddOp{{$relAlias.Local}}(t *testing.T) {
 	}
 
 	for i, x := range foreignersSplitByInsertion {
-		err = a.Add{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, i != 0, x...)
+		err = a.Add{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, i != 0, x...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -96,7 +96,7 @@ func test{{$ltable.UpSingular}}ToManyAddOp{{$relAlias.Local}}(t *testing.T) {
 			t.Error("relationship struct slice not set to correct value")
 		}
 
-		count, err := a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+		count, err := a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,8 +110,8 @@ func test{{$ltable.UpSingular}}ToManyAddOp{{$relAlias.Local}}(t *testing.T) {
 func test{{$ltable.UpSingular}}ToManySetOp{{$relAlias.Local}}(t *testing.T) {
 	var err error
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -128,22 +128,22 @@ func test{{$ltable.UpSingular}}ToManySetOp{{$relAlias.Local}}(t *testing.T) {
 		}
 	}
 
-	if err = a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = a.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = b.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = b.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
-	if err = c.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err = c.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	err = a.Set{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, false, &b, &c)
+	err = a.Set{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, false, &b, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,12 +151,12 @@ func test{{$ltable.UpSingular}}ToManySetOp{{$relAlias.Local}}(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	err = a.Set{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, true, &d, &e)
+	err = a.Set{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, true, &d, &e)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err = a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err = a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,8 +231,8 @@ func test{{$ltable.UpSingular}}ToManySetOp{{$relAlias.Local}}(t *testing.T) {
 func test{{$ltable.UpSingular}}ToManyRemoveOp{{$relAlias.Local}}(t *testing.T) {
 	var err error
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
 
 	var a {{$ltable.UpSingular}}
@@ -249,16 +249,16 @@ func test{{$ltable.UpSingular}}ToManyRemoveOp{{$relAlias.Local}}(t *testing.T) {
 		}
 	}
 
-	if err := a.Insert({{if not $options.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
+	if err := a.Insert({{if not $data.NoContext}}ctx, {{end -}} tx, simmer.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	err = a.Add{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, true, foreigners...)
+	err = a.Add{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, true, foreigners...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,12 +266,12 @@ func test{{$ltable.UpSingular}}ToManyRemoveOp{{$relAlias.Local}}(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	err = a.Remove{{$relAlias.Local}}({{if not $options.NoContext}}ctx, {{end -}} tx, foreigners[:2]...)
+	err = a.Remove{{$relAlias.Local}}({{if not $data.NoContext}}ctx, {{end -}} tx, foreigners[:2]...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err = a.{{$relAlias.Local}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err = a.{{$relAlias.Local}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Fatal(err)
 	}

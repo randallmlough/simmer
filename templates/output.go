@@ -74,7 +74,7 @@ type Options struct {
 	Templates     []LazyTemplate
 	TemplateFuncs TemplateFuncs
 
-	ImportSet      importers.Set
+	ImportSet      *importers.Set
 	ImportNamedSet importers.Map
 
 	IsTest      bool
@@ -103,12 +103,12 @@ func executeTemplates(e Options) error {
 		for ext, tplNames := range dirExts {
 			tempData := &bytes.Buffer{}
 			for _, tplName := range tplNames {
-
 				if err := executeTemplate(tempData, templates.Template, tplName, e.Data); err != nil {
 					return errors.Wrapf(err, "failed to execute file %s", e.Filename)
 				}
 			}
-			if len(tempData.String()) != 0 {
+			// if tempData contains no data or has length of 1 (to account for \n), then don't create the file
+			if len(tempData.String()) > 1 {
 				out := templateByteBuffer
 				out.Reset()
 				isGo := filepath.Ext(ext) == ".go"
@@ -121,9 +121,10 @@ func executeTemplates(e Options) error {
 						writeFileDisclaimer(out)
 					}
 					writePackageName(out, pkgName)
-					imports := importers.MergeSet(e.ImportSet, *set)
-					set.Reset()
+
+					imports := importers.MergeSet(*e.ImportSet, *set)
 					writeImports(out, imports)
+					set.Reset()
 				}
 
 				out.Write(tempData.Bytes())

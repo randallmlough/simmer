@@ -17,14 +17,14 @@ func test{{$alias.UpPlural}}Upsert(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	{{if not $options.NoContext}}ctx := context.Background(){{end}}
-	tx := MustTx({{if $options.NoContext}}{{if $options.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}}{{else}}simmer.BeginTx(ctx, nil){{end}})
+	{{if not $data.NoContext}}ctx := context.Background(){{end}}
+	tx := MustTx({{if $data.NoContext}}{{if $data.NoContext}}simmer.Begin(){{else}}simmer.BeginTx(ctx, nil){{end}}{{else}}simmer.BeginTx(ctx, nil){{end}})
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Upsert({{if not $options.NoContext}}ctx, {{end -}} tx, false, nil, simmer.Infer(), simmer.Infer()); err != nil {
+	if err = o.Upsert({{if not $data.NoContext}}ctx, {{end -}} tx, false, nil, simmer.Infer(), simmer.Infer()); err != nil {
 		t.Errorf("Unable to upsert {{$alias.UpSingular}}: %s", err)
 	}
 
-	count, err := {{$alias.UpPlural}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err := {{$alias.UpPlural}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -37,11 +37,11 @@ func test{{$alias.UpPlural}}Upsert(t *testing.T) {
 		t.Errorf("Unable to randomize {{$alias.UpSingular}} struct: %s", err)
 	}
 
-	if err = o.Upsert({{if not $options.NoContext}}ctx, {{end -}} tx, true, nil, simmer.Infer(), simmer.Infer()); err != nil {
+	if err = o.Upsert({{if not $data.NoContext}}ctx, {{end -}} tx, true, nil, simmer.Infer(), simmer.Infer()); err != nil {
 		t.Errorf("Unable to upsert {{$alias.UpSingular}}: %s", err)
 	}
 
-	count, err = {{$alias.UpPlural}}().Count({{if not $options.NoContext}}ctx, {{end -}} tx)
+	count, err = {{$alias.UpPlural}}().Count({{if not $data.NoContext}}ctx, {{end -}} tx)
 	if err != nil {
 		t.Error(err)
 	}

@@ -1,6 +1,9 @@
 package schema
 
-import "go/types"
+import (
+	"github.com/randallmlough/simmer/importers"
+	"go/types"
+)
 
 type Interface struct {
 	Description string
@@ -48,13 +51,25 @@ type Field struct {
 	// boiler relation stuff is inside this field
 	//BoilerField model.Field
 	// graphql relation ship can be found here
-	//Relationship *Type
+	//Relationship *typ
 
 	// Some stuff
 	Description string
-	Type        types.Type
 	Tag         string
-	Imports     *Imports
+	type_       types.Type
+	package_    *types.Package
+	imports     *importers.Set
+}
+
+func (f *Field) Type() string {
+	if f.package_ != nil {
+		f.imports.Add(f.package_.Path())
+	}
+	return f.type_.String()
+}
+
+func (f *Field) UnderlyingType() string {
+	return f.type_.String()
 }
 
 type Imports struct {
